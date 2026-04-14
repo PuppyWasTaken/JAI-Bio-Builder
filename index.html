@@ -522,13 +522,36 @@
       border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+	a {
+    color: #6df2e1;
+    text-decoration: 1px underline;
+}
+footer .dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-dim);
+}
+footer span {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+footer {
+    padding: 0.75rem 2.5rem;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
   </style>
 </head>
 <body>
 
 <div id="topbar">
   <h1>JAI Bio Builder</h1>
-  <span>Select text → apply formatting, colors, font sizes, alignment, or CSS classes</span>
+  <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
 </div>
 
 <div id="toolbar">
@@ -605,6 +628,16 @@
     <div id="class-list"></div>
   </div>
 </div>
+
+<footer>
+  <span>No official affiliation to JAI</span>
+  <span class="dot"></span>
+  <span>No data is sent anywhere</span>
+  <span class="dot"></span>
+  <span>Handles CSS, HTML, JSX, SCSS</span>
+  <span class="dot"></span>
+  <span>Made and Maintained by <a href="https://puppy.uwu.ai/">Permanent</a></span>
+</footer>
 
 <script>
 const CSS_URL = 'https://raw.githubusercontent.com/PuppyWasTaken/JAI-Bio-Builder/main/jai_site_stylesheet.css';
