@@ -362,9 +362,17 @@ footer {
     <button class="tb-btn" id="apply-color-btn">Apply</button>
   </div>
   <div class="tb-group">
-    <button class="tb-btn" id="bold-btn" style="font-weight:700">B</button>
-    <button class="tb-btn" id="italic-btn" style="font-style:italic">I</button>
-    <button class="tb-btn" id="under-btn" style="text-decoration:underline">U</button>
+    <button class="tb-btn" id="undo-btn" title="Undo (Ctrl+Z)">↩ Undo</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb-btn" id="bold-btn" style="font-weight:700" title="Bold (Ctrl+B)">B</button>
+    <button class="tb-btn" id="italic-btn" style="font-style:italic" title="Italic (Ctrl+I)">I</button>
+    <button class="tb-btn" id="under-btn" style="text-decoration:underline" title="Underline (Ctrl+U)">U</button>
+    <button class="tb-btn" id="strike-btn" style="text-decoration:line-through" title="Strikethrough">S</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb-btn" id="insert-image-btn" title="Insert Image">🖼 Image</button>
+    <button class="tb-btn" id="insert-link-btn" title="Insert Hyperlink">🔗 Link</button>
   </div>
   <div class="tb-group">
     <button id="panel-toggle">Classes ›</button>
@@ -410,6 +418,46 @@ footer {
     </div>
     <input id="class-search" type="text" placeholder="Search classes...">
     <div id="class-list"></div>
+  </div>
+</div>
+
+<!-- Image Insert Modal -->
+<div id="image-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+  <div style="background:#1a1228;border:1px solid #3a2a52;border-radius:10px;padding:22px 24px;width:360px;max-width:95vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <span style="font-size:13px;font-weight:600;color:#c084fc;">Insert Image</span>
+      <button id="image-modal-close" style="background:none;border:none;color:#7c6a9a;font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <label style="font-size:11px;color:#7c6a9a;display:block;margin-bottom:4px;">Image URL</label>
+    <input id="image-url-input" type="url" placeholder="https://example.com/image.png"
+      style="width:100%;padding:8px 10px;font-size:12px;background:#0f0a1a;border:1px solid #3a2a52;border-radius:6px;color:#e8e0f0;outline:none;margin-bottom:10px;">
+    <label style="font-size:11px;color:#7c6a9a;display:block;margin-bottom:4px;">Alt text (optional)</label>
+    <input id="image-alt-input" type="text" placeholder="Description of image"
+      style="width:100%;padding:8px 10px;font-size:12px;background:#0f0a1a;border:1px solid #3a2a52;border-radius:6px;color:#e8e0f0;outline:none;margin-bottom:14px;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="image-modal-cancel" style="padding:6px 16px;font-size:12px;border:1px solid #3a2a52;border-radius:6px;background:#1e1530;color:#7c6a9a;cursor:pointer;">Cancel</button>
+      <button id="image-modal-insert" style="padding:6px 16px;font-size:12px;border:1px solid #6d28d9;border-radius:6px;background:#3b1f6e;color:#e0b0ff;cursor:pointer;font-weight:600;">Insert</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Insert Modal -->
+<div id="link-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+  <div style="background:#1a1228;border:1px solid #3a2a52;border-radius:10px;padding:22px 24px;width:360px;max-width:95vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <span style="font-size:13px;font-weight:600;color:#c084fc;">Insert Hyperlink</span>
+      <button id="link-modal-close" style="background:none;border:none;color:#7c6a9a;font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <label style="font-size:11px;color:#7c6a9a;display:block;margin-bottom:4px;">Display text</label>
+    <input id="link-text-input" type="text" placeholder="Link text"
+      style="width:100%;padding:8px 10px;font-size:12px;background:#0f0a1a;border:1px solid #3a2a52;border-radius:6px;color:#e8e0f0;outline:none;margin-bottom:10px;">
+    <label style="font-size:11px;color:#7c6a9a;display:block;margin-bottom:4px;">URL</label>
+    <input id="link-url-input" type="url" placeholder="https://example.com"
+      style="width:100%;padding:8px 10px;font-size:12px;background:#0f0a1a;border:1px solid #3a2a52;border-radius:6px;color:#e8e0f0;outline:none;margin-bottom:14px;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="link-modal-cancel" style="padding:6px 16px;font-size:12px;border:1px solid #3a2a52;border-radius:6px;background:#1e1530;color:#7c6a9a;cursor:pointer;">Cancel</button>
+      <button id="link-modal-insert" style="padding:6px 16px;font-size:12px;border:1px solid #6d28d9;border-radius:6px;background:#3b1f6e;color:#e0b0ff;cursor:pointer;font-weight:600;">Insert</button>
+    </div>
   </div>
 </div>
 
@@ -659,11 +707,16 @@ function buildDoc(bodyHTML, bodyCSS) {
 /* ────────────────────────────────────────────
    PREVIEW
 ──────────────────────────────────────────── */
+/* Debounced preview — only rewrite srcdoc after user stops typing for 300ms */
+let _previewTimer = null;
 function updatePreview() {
-  previewFrame.srcdoc = buildDoc(
-    richEditor.innerHTML,
-    'font-family:system-ui,sans-serif;padding:20px;line-height:1.75;font-size:15px;background:rgb(29,12,49);color:#ffffff;'
-  );
+  clearTimeout(_previewTimer);
+  _previewTimer = setTimeout(() => {
+    previewFrame.srcdoc = buildDoc(
+      richEditor.innerHTML,
+      'font-family:system-ui,sans-serif;padding:20px;line-height:1.75;font-size:15px;background:rgb(29,12,49);color:#ffffff;'
+    );
+  }, 300);
 }
 
 /* ────────────────────────────────────────────
@@ -735,14 +788,26 @@ function updateFontSizeDisplay() {
   fontSizeDisp.textContent = window.getComputedStyle(el).fontSize || '—';
 }
 
-richEditor.addEventListener('mouseup', saveSelection);
-richEditor.addEventListener('keyup',   saveSelection);
+/* Use selectionchange so ANY selection method (click, drag, keyboard, touch) is captured */
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (richEditor.contains(range.commonAncestorContainer)) {
+    savedRange = range.cloneRange();
+    const txt = savedRange.toString();
+    statusEl.textContent = txt
+      ? 'Selected: "' + txt.slice(0, 70) + (txt.length > 70 ? '…' : '') + '"'
+      : 'Cursor placed';
+    updateFontSizeDisplay();
+  }
+});
 
 /* ────────────────────────────────────────────
    FONT SIZE
 ──────────────────────────────────────────── */
-document.getElementById('font-inc').addEventListener('click', () => adjustFontSize(2));
-document.getElementById('font-dec').addEventListener('click', () => adjustFontSize(-2));
+document.getElementById('font-inc').addEventListener('click', () => { pushUndo(); adjustFontSize(2); });
+document.getElementById('font-dec').addEventListener('click', () => { pushUndo(); adjustFontSize(-2); });
 
 function adjustFontSize(delta) {
   if (!restoreSelection()) { statusEl.textContent = 'Click in the editor first'; return; }
@@ -788,6 +853,7 @@ function adjustFontSize(delta) {
    ALIGNMENT
 ──────────────────────────────────────────── */
 function applyAlign(align) {
+  pushUndo();
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
@@ -831,6 +897,7 @@ document.getElementById('btn-bg-color').addEventListener('click', () => {
   document.getElementById('btn-text-color').classList.remove('active');
 });
 document.getElementById('apply-color-btn').addEventListener('click', () => {
+  pushUndo();
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
@@ -845,10 +912,55 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
 });
 
 /* ────────────────────────────────────────────
-   BOLD / ITALIC / UNDERLINE
+   UNDO STACK
 ──────────────────────────────────────────── */
-[['bold-btn','bold'],['italic-btn','italic'],['under-btn','underline']].forEach(([id, cmd]) => {
+const undoStack = [];
+let lastHTML = richEditor.innerHTML;
+let undoPushTimer = null;
+
+function pushUndo() {
+  const current = richEditor.innerHTML;
+  if (current === lastHTML) return;
+  undoStack.push(lastHTML);
+  if (undoStack.length > 100) undoStack.shift();
+  lastHTML = current;
+}
+
+function scheduleUndoPush() {
+  clearTimeout(undoPushTimer);
+  undoPushTimer = setTimeout(pushUndo, 400);
+}
+
+function performUndo() {
+  clearTimeout(undoPushTimer);
+  pushUndo(); // capture any pending state first
+  if (!undoStack.length) { statusEl.textContent = 'Nothing to undo'; return; }
+  const prev = undoStack.pop();
+  richEditor.innerHTML = prev;
+  lastHTML = prev;
+  syncOutput();
+  statusEl.textContent = 'Undo applied';
+}
+
+document.getElementById('undo-btn').addEventListener('click', performUndo);
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    if (document.activeElement === richEditor || richEditor.contains(document.activeElement)) {
+      e.preventDefault();
+      performUndo();
+    }
+  }
+});
+
+richEditor.addEventListener('input', scheduleUndoPush);
+
+/* ────────────────────────────────────────────
+   BOLD / ITALIC / UNDERLINE / STRIKETHROUGH
+──────────────────────────────────────────── */
+[['bold-btn','bold'],['italic-btn','italic'],['under-btn','underline'],['strike-btn','strikeThrough']].forEach(([id, cmd]) => {
   document.getElementById(id).addEventListener('click', () => {
+    pushUndo();
     if (!restoreSelection()) return;
     document.execCommand(cmd);
     syncOutput(); saveSelection();
@@ -859,6 +971,7 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
    APPLY CSS CLASS
 ──────────────────────────────────────────── */
 function applyClass(className) {
+  pushUndo();
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
@@ -976,6 +1089,113 @@ async function loadCSS() {
 
 loadCSS();
 syncOutput();
+
+/* ────────────────────────────────────────────
+   IMAGE INSERT MODAL
+──────────────────────────────────────────── */
+const imageModal  = document.getElementById('image-modal');
+const imageUrlIn  = document.getElementById('image-url-input');
+const imageAltIn  = document.getElementById('image-alt-input');
+
+function openImageModal() {
+  // capture current selection text for alt prefill
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && !sel.isCollapsed) {
+    imageAltIn.value = sel.toString();
+    pushUndo();
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+  imageUrlIn.value = '';
+  imageModal.style.display = 'flex';
+  imageUrlIn.focus();
+}
+
+function closeImageModal() { imageModal.style.display = 'none'; }
+
+document.getElementById('insert-image-btn').addEventListener('click', openImageModal);
+document.getElementById('image-modal-close').addEventListener('click', closeImageModal);
+document.getElementById('image-modal-cancel').addEventListener('click', closeImageModal);
+imageModal.addEventListener('click', e => { if (e.target === imageModal) closeImageModal(); });
+
+document.getElementById('image-modal-insert').addEventListener('click', () => {
+  const url = imageUrlIn.value.trim();
+  if (!url) { imageUrlIn.focus(); return; }
+  pushUndo();
+  if (!restoreSelection()) { richEditor.focus(); }
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = imageAltIn.value.trim();
+  img.style.maxWidth = '100%';
+  const sel2 = window.getSelection();
+  if (sel2 && sel2.rangeCount) {
+    const r = sel2.getRangeAt(0);
+    r.deleteContents();
+    r.insertNode(img);
+    r.setStartAfter(img);
+    r.collapse(true);
+    sel2.removeAllRanges();
+    sel2.addRange(r);
+  } else {
+    richEditor.appendChild(img);
+  }
+  closeImageModal();
+  syncOutput();
+});
+
+/* ────────────────────────────────────────────
+   LINK INSERT MODAL
+──────────────────────────────────────────── */
+const linkModal  = document.getElementById('link-modal');
+const linkTextIn = document.getElementById('link-text-input');
+const linkUrlIn  = document.getElementById('link-url-input');
+
+function openLinkModal() {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && !sel.isCollapsed) {
+    linkTextIn.value = sel.toString();
+    pushUndo();
+    savedRange = sel.getRangeAt(0).cloneRange();
+  } else {
+    linkTextIn.value = '';
+  }
+  linkUrlIn.value = '';
+  linkModal.style.display = 'flex';
+  linkUrlIn.focus();
+}
+
+function closeLinkModal() { linkModal.style.display = 'none'; }
+
+document.getElementById('insert-link-btn').addEventListener('click', openLinkModal);
+document.getElementById('link-modal-close').addEventListener('click', closeLinkModal);
+document.getElementById('link-modal-cancel').addEventListener('click', closeLinkModal);
+linkModal.addEventListener('click', e => { if (e.target === linkModal) closeLinkModal(); });
+
+document.getElementById('link-modal-insert').addEventListener('click', () => {
+  const url = linkUrlIn.value.trim();
+  if (!url) { linkUrlIn.focus(); return; }
+  const text = linkTextIn.value.trim() || url;
+  pushUndo();
+  if (!restoreSelection()) { richEditor.focus(); }
+  const a = document.createElement('a');
+  a.href = url;
+  a.textContent = text;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  const sel2 = window.getSelection();
+  if (sel2 && sel2.rangeCount) {
+    const r = sel2.getRangeAt(0);
+    r.deleteContents();
+    r.insertNode(a);
+    r.setStartAfter(a);
+    r.collapse(true);
+    sel2.removeAllRanges();
+    sel2.addRange(r);
+  } else {
+    richEditor.appendChild(a);
+  }
+  closeLinkModal();
+  syncOutput();
+});
 </script>
 </body>
 </html>
