@@ -16,7 +16,9 @@
       flex-direction: column;
       overflow: hidden;
     }
-
+img {
+    max-width: 100%;
+}
     /* ── Top bar ── */
     #topbar {
       display: flex;
@@ -276,7 +278,7 @@
       border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-		a {
+		#topbar a, footer a{
     color: #6df2e1;
     text-decoration: 1px underline;
 }
