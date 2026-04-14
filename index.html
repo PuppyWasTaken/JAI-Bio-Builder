@@ -326,7 +326,7 @@ footer {
 <body>
 
 <div id="topbar">
-<div class="logo-icon">
+<a class="logo-icon" href="https://github.com/PuppyWasTaken/JAI-Bio-Builder">
       <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M74 211.658C99.0457 142.251 155.836 87.1314 226.717 108.765C276.177 123.861 255.428 151.992 274.648 170.486C285.492 178.829 314.933 167.631 322.548 178.047C329.28 187.259 324.416 204.065 322.548 215.097C315.179 258.597 265.313 265 223.065 265" stroke="#000000" stroke-opacity="0.9" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"></path>
 <path d="M325 194C321.518 187.392 313.572 181.214 304 176" stroke="#000000" stroke-opacity="0.9" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -336,13 +336,13 @@ footer {
     </div>
   <h1>JAI Bio Builder</h1>
   <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
-</div>
+</a>
 
 <div id="toolbar">
   <div class="tb-group">
     <span class="tb-label">Size</span>
     <button class="tb-btn" id="font-dec">−</button>
-    <span id="font-size-display" style="font-size:12px;min-width:36px;text-align:center;color:#7c6a9a">—</span>
+    <input id="font-size-display" type="text" value="—" title="Type a size and press Enter" style="font-size:12px;width:46px;text-align:center;color:#c084fc;background:#0f0a1a;border:1px solid #3a2a52;border-radius:5px;padding:3px 4px;outline:none;cursor:text;">
     <button class="tb-btn" id="font-inc">+</button>
   </div>
   <div class="tb-group">
@@ -782,11 +782,72 @@ function restoreSelection() {
 }
 
 function updateFontSizeDisplay() {
-  if (!savedRange || savedRange.collapsed) { fontSizeDisp.textContent = '—'; return; }
+  if (!savedRange || savedRange.collapsed) { fontSizeDisp.value = '—'; return; }
   const node = savedRange.startContainer;
   const el   = node.nodeType === 3 ? node.parentElement : node;
-  fontSizeDisp.textContent = window.getComputedStyle(el).fontSize || '—';
+  fontSizeDisp.value = window.getComputedStyle(el).fontSize || '—';
 }
+
+
+/* ────────────────────────────────────────────
+   FONT SIZE INPUT — direct entry
+──────────────────────────────────────────── */
+function applyFontSizeFromInput() {
+  const raw = fontSizeDisp.value.trim().replace(/px$/i, '');
+  const px  = parseInt(raw, 10);
+  if (!px || px < 1) { updateFontSizeDisplay(); return; }   // invalid — revert display
+  const clamped = Math.max(8, Math.min(200, px));
+  if (!restoreSelection()) { updateFontSizeDisplay(); return; }
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { updateFontSizeDisplay(); return; }
+  pushUndo();
+  const range = sel.getRangeAt(0);
+
+  // If cursor is inside an existing managed span, just update it
+  let node = range.startContainer;
+  while (node && node !== richEditor) {
+    if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
+      node.style.fontSize = clamped + 'px';
+      fontSizeDisp.value  = clamped + 'px';
+      syncOutput();
+      return;
+    }
+    node = node.parentNode;
+  }
+
+  const extracted = range.extractContents();
+  const span = document.createElement('span');
+  span.style.fontSize    = clamped + 'px';
+  span.dataset.fsManaged = '1';
+  span.appendChild(extracted);
+  range.insertNode(span);
+
+  const newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  newRange.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+  savedRange = newRange.cloneRange();
+
+  fontSizeDisp.value = clamped + 'px';
+  syncOutput();
+}
+
+fontSizeDisp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyFontSizeFromInput(); richEditor.focus(); }
+  if (e.key === 'Escape') { updateFontSizeDisplay(); richEditor.focus(); }
+});
+
+/* Select-all on focus so the user can just type the new value immediately */
+fontSizeDisp.addEventListener('focus', () => { fontSizeDisp.select(); });
+
+/* Clicking the input must not lose the editor selection — save it first */
+fontSizeDisp.addEventListener('mousedown', () => {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && richEditor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+});
 
 /* Use selectionchange so ANY selection method (click, drag, keyboard, touch) is captured */
 document.addEventListener('selectionchange', () => {
@@ -821,7 +882,7 @@ function adjustFontSize(delta) {
     if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
       const next = Math.max(8, (parseInt(node.style.fontSize) || 16) + delta);
       node.style.fontSize = next + 'px';
-      fontSizeDisp.textContent = next + 'px';
+      fontSizeDisp.value = next + 'px';
       syncOutput(); return;
     }
     node = node.parentNode;
@@ -845,7 +906,7 @@ function adjustFontSize(delta) {
   sel.addRange(newRange);
   savedRange = newRange.cloneRange();
 
-  fontSizeDisp.textContent = newPx + 'px';
+  fontSizeDisp.value = newPx + 'px';
   syncOutput();
 }
 
