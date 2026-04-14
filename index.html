@@ -361,172 +361,89 @@
     #panel-toggle:hover { background: #2a1e40; }
 
     /* ── Main layout ── */
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* ── Left: editor + html side by side ── */
-    #editor-section {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      flex-direction: row;
-    }
+    #main { display: flex; flex: 1; overflow: hidden; }
+    #editor-section { display: flex; flex: 1; overflow: hidden; }
 
     /* ── Rich editor pane ── */
     #editor-pane {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
+      display: flex; flex-direction: column;
+      flex: 1; overflow: hidden;
       border-right: 1px solid #2e2040;
       min-width: 0;
     }
-
-    #editor-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7c6a9a;
-      padding: 5px 14px;
-      background: #150f20;
+    .pane-label {
+      font-size: 11px; font-weight: 600; color: #7c6a9a;
+      padding: 5px 14px; background: #150f20;
       border-bottom: 1px solid #2e2040;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      flex-shrink: 0;
+      letter-spacing: .04em; text-transform: uppercase;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
     }
 
     #rich-editor {
-      flex: 1;
-      padding: 20px 24px;
-      overflow-y: auto;
-      outline: none;
-      font-size: 15px;
-      line-height: 1.75;
-      color: #e8e0f0;
-      background: #0f0d14;
+      flex: 1; padding: 20px 24px;
+      overflow-y: auto; outline: none;
+      font-size: 15px; line-height: 1.75;
+      color: #e8e0f0; background: #0f0d14;
     }
-    #rich-editor:empty::before {
-      content: 'Start typing your bio here...';
-      color: #4a3a62;
-      pointer-events: none;
-    }
+    #rich-editor p { margin-bottom: 8px; }
+    #rich-editor::-webkit-scrollbar { width: 4px; }
+    #rich-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
 
     /* ── HTML output pane ── */
     #html-pane {
-      display: flex;
-      flex-direction: column;
-      width: 340px;
-      flex-shrink: 0;
-      overflow: hidden;
+      display: flex; flex-direction: column;
+      width: 300px; flex-shrink: 0; overflow: hidden;
       border-right: 1px solid #2e2040;
     }
-
-    #html-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7c6a9a;
-      padding: 5px 14px;
-      background: #150f20;
-      border-bottom: 1px solid #2e2040;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    #copy-html-btn {
-      font-size: 10px;
-      padding: 2px 8px;
-      border: 1px solid #3a2a52;
-      border-radius: 4px;
-      background: #1e1530;
-      color: #7c6a9a;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    #copy-html-btn:hover { background: #2a1e40; color: #c084fc; }
-
     #source-editor {
-      flex: 1;
-      padding: 14px;
+      flex: 1; padding: 14px;
       font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-      font-size: 11px;
-      line-height: 1.65;
+      font-size: 11px; line-height: 1.65;
       border: none;
-      background: #0a0810;
-      color: #c8b8e8;
-      resize: none;
-      width: 100%;
-      outline: none;
-      scrollbar-width: thin;
-      scrollbar-color: #3a2a52 transparent;
+      background: rgb(29, 12, 49);
+      color: #ffffff;
+      resize: none; width: 100%; outline: none;
+      scrollbar-width: thin; scrollbar-color: #3a2a52 transparent;
     }
     #source-editor::-webkit-scrollbar { width: 4px; }
     #source-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
 
-    /* ── Preview pane (right side, shows live render with stylesheet) ── */
+    #copy-html-btn {
+      font-size: 10px; padding: 2px 8px;
+      border: 1px solid #3a2a52; border-radius: 4px;
+      background: #1e1530; color: #7c6a9a; cursor: pointer; transition: all .15s;
+    }
+    #copy-html-btn:hover { background: #2a1e40; color: #c084fc; }
+
+    /* ── Preview pane ── */
     #preview-pane {
-      display: flex;
-      flex-direction: column;
-      width: 340px;
-      flex-shrink: 0;
-      overflow: hidden;
+      display: flex; flex-direction: column;
+      width: 320px; flex-shrink: 0; overflow: hidden;
     }
-
-    #preview-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7c6a9a;
-      padding: 5px 14px;
-      background: #150f20;
-      border-bottom: 1px solid #2e2040;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      flex-shrink: 0;
-    }
-
     #preview-frame {
-      flex: 1;
-      border: none;
-      width: 100%;
-      background: rgb(29, 12, 49);
-      color:white;
+      flex: 1; border: none; width: 100%;
     }
 
     /* ── Status bar ── */
     #status {
-      font-size: 11px;
-      color: #7c6a9a;
-      padding: 4px 16px;
-      border-top: 1px solid #2e2040;
-      background: #150f20;
-      flex-shrink: 0;
+      font-size: 11px; color: #7c6a9a;
+      padding: 4px 16px; border-top: 1px solid #2e2040;
+      background: #150f20; flex-shrink: 0;
     }
 
     /* ── Class panel ── */
     #class-panel {
-      width: 0;
-      overflow: hidden;
+      width: 0; overflow: hidden;
       border-left: 1px solid #2e2040;
       transition: width 0.25s ease;
       background: #120e1c;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
+      display: flex; flex-direction: column; flex-shrink: 0;
     }
-    #class-panel.open { width: 280px; }
+    #class-panel.open { width: 270px; }
 
     #panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      border-bottom: 1px solid #2e2040;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid #2e2040; flex-shrink: 0;
     }
     #panel-header h3 { font-size: 13px; font-weight: 600; color: #c084fc; white-space: nowrap; }
     #panel-close {
@@ -555,7 +472,6 @@
     #class-search::placeholder { color: #4a3a62; }
 
     #class-list {
-      max-height:100vh;
       flex: 1; overflow-y: auto; padding: 6px;
       scrollbar-width: thin; scrollbar-color: #3a2a52 transparent;
     }
@@ -563,7 +479,7 @@
     #class-list::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
 
     .class-item {
-      margin-bottom: 6px; border: 1px solid #2e2040;
+      margin-bottom: 8px; border: 1px solid #2e2040;
       border-radius: 7px; overflow: hidden; transition: border-color .15s;
     }
     .class-item:hover { border-color: #5b3f8a; }
@@ -584,14 +500,12 @@
     }
     .apply-btn:hover { background: #3b1f6e; color: #e0b0ff; border-color: #6d28d9; }
 
-    /* The class preview renders inside an iframe so the real stylesheet applies */
-    .class-preview-frame {
+    .class-preview-iframe {
       width: 100%;
-      height: 60px;
       border: none;
       display: block;
-      background:rgb(29, 12, 49);
-      color:white;
+      min-height: 40px;
+      background: rgb(29, 12, 49);
     }
 
     .class-css-snippet {
@@ -608,39 +522,13 @@
       border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    #rich-editor::-webkit-scrollbar { width: 4px; }
-    #rich-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
-  footer {
-    padding: 0.75rem 2.5rem;
-    font-size: 0.7rem;
-    color: white;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-    footer span {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-    footer .dot {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: white;
-}
-    a {
-    color: #6df2e1;
-    text-decoration: 1px underline;
-}
   </style>
 </head>
 <body>
 
 <div id="topbar">
   <h1>JAI Bio Builder</h1>
-  <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
+  <span>Select text → apply formatting, colors, font sizes, alignment, or CSS classes</span>
 </div>
 
 <div id="toolbar">
@@ -652,9 +540,9 @@
   </div>
   <div class="tb-group">
     <span class="tb-label">Align</span>
-    <button class="tb-btn" id="align-left" title="Align left">&#8676;</button>
-    <button class="tb-btn" id="align-center" title="Align center">&#8652;</button>
-    <button class="tb-btn" id="align-right" title="Align right">&#8677;</button>
+    <button class="tb-btn" id="align-left" title="Left">&#8676;</button>
+    <button class="tb-btn" id="align-center" title="Center">&#8652;</button>
+    <button class="tb-btn" id="align-right" title="Right">&#8677;</button>
   </div>
   <div class="tb-group">
     <span class="tb-label">Color</span>
@@ -679,33 +567,29 @@
 <div id="main">
   <div id="editor-section">
 
-    <!-- Rich editor -->
     <div id="editor-pane">
-      <div id="editor-label">Edit</div>
+      <div class="pane-label">Edit</div>
       <div id="rich-editor" contenteditable="true" spellcheck="true">
         <p>Start typing your bio here. <strong>Select any text</strong> to apply formatting, colors, font sizes, alignment, or CSS classes using the toolbar above.</p>
       </div>
       <div id="status">Select text to apply formatting</div>
     </div>
 
-    <!-- HTML output -->
     <div id="html-pane">
-      <div id="html-label">
+      <div class="pane-label">
         HTML Output
         <button id="copy-html-btn">Copy</button>
       </div>
       <textarea id="source-editor" spellcheck="false" readonly></textarea>
     </div>
 
-    <!-- Live preview -->
     <div id="preview-pane">
-      <div id="preview-label">Preview (with stylesheet)</div>
-      <iframe id="preview-frame" sandbox="allow-same-origin" title="Live preview"></iframe>
+      <div class="pane-label">Preview</div>
+      <iframe id="preview-frame" title="Live preview"></iframe>
     </div>
 
   </div>
 
-  <!-- Class panel -->
   <div id="class-panel">
     <div id="panel-header">
       <h3>CSS Classes</h3>
@@ -722,29 +606,20 @@
   </div>
 </div>
 
-<footer>
-  <span>No official affiliation to JAI</span>
-  <span class="dot"></span>
-  <span>No data is sent anywhere</span>
-  <span class="dot"></span>
-  <span>Handles CSS, HTML, JSX, SCSS</span>
-  <span class="dot"></span>
-  <span>Made and Maintained by <a href="https://puppy.uwu.ai/">Permanent</a></span>
-</footer>
 <script>
 const CSS_URL = 'https://raw.githubusercontent.com/PuppyWasTaken/JAI-Bio-Builder/main/jai_site_stylesheet.css';
 
-const richEditor    = document.getElementById('rich-editor');
-const sourceEditor  = document.getElementById('source-editor');
-const previewFrame  = document.getElementById('preview-frame');
-const statusEl      = document.getElementById('status');
-const colorSwatch   = document.getElementById('color-swatch');
-const colorInput    = document.getElementById('color-input');
-const fontSizeDisp  = document.getElementById('font-size-display');
-const classSearch   = document.getElementById('class-search');
-const classListEl   = document.getElementById('class-list');
-const panelStatusTx = document.getElementById('panel-status-text');
-const classPanel    = document.getElementById('class-panel');
+const richEditor   = document.getElementById('rich-editor');
+const sourceEditor = document.getElementById('source-editor');
+const previewFrame = document.getElementById('preview-frame');
+const statusEl     = document.getElementById('status');
+const colorSwatch  = document.getElementById('color-swatch');
+const colorInput   = document.getElementById('color-input');
+const fontSizeDisp = document.getElementById('font-size-display');
+const classSearch  = document.getElementById('class-search');
+const classListEl  = document.getElementById('class-list');
+const panelStatus  = document.getElementById('panel-status-text');
+const classPanel   = document.getElementById('class-panel');
 
 let savedRange = null;
 let colorMode  = 'text';
@@ -754,7 +629,67 @@ let rawCSS     = '';
 colorSwatch.style.background = colorInput.value;
 
 /* ────────────────────────────────────────────
-   SELECTION HELPERS
+   CORE: build a full srcdoc string with rawCSS
+   injected inline as a <style> block.
+   This avoids all CORS / external-fetch issues
+   inside sandboxed iframes.
+──────────────────────────────────────────── */
+function buildDoc(bodyHTML, bodyCSS) {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+${rawCSS}
+</style><style>body{${bodyCSS || ''}}</style></head><body>${bodyHTML}</body></html>`;
+}
+
+/* ────────────────────────────────────────────
+   PREVIEW
+──────────────────────────────────────────── */
+function updatePreview() {
+  previewFrame.srcdoc = buildDoc(
+    richEditor.innerHTML,
+    'font-family:system-ui,sans-serif;padding:20px;line-height:1.75;font-size:15px;background:rgb(29,12,49);color:#ffffff;'
+  );
+}
+
+/* ────────────────────────────────────────────
+   HTML OUTPUT
+──────────────────────────────────────────── */
+function formatHTML(html) {
+  const voids = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  let result = '', indent = 0;
+  html.split(/(<[^>]+>)/g).forEach(tok => {
+    if (!tok.trim()) return;
+    if (tok.startsWith('</')) {
+      indent = Math.max(0, indent - 1);
+      result += '  '.repeat(indent) + tok + '\n';
+    } else if (tok.startsWith('<')) {
+      const tag = (tok.match(/<([a-zA-Z0-9-]+)/) || [])[1] || '';
+      result += '  '.repeat(indent) + tok + '\n';
+      if (!voids.has(tag.toLowerCase()) && !tok.endsWith('/>')) indent++;
+    } else {
+      const t = tok.trim();
+      if (t) result += '  '.repeat(indent) + t + '\n';
+    }
+  });
+  return result.trim();
+}
+
+function syncOutput() {
+  sourceEditor.value = formatHTML(richEditor.innerHTML);
+  updatePreview();
+}
+
+richEditor.addEventListener('input', syncOutput);
+
+document.getElementById('copy-html-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(sourceEditor.value).then(() => {
+    const btn = document.getElementById('copy-html-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  });
+});
+
+/* ────────────────────────────────────────────
+   SELECTION
 ──────────────────────────────────────────── */
 function saveSelection() {
   const sel = window.getSelection();
@@ -797,10 +732,9 @@ function adjustFontSize(delta) {
   if (!restoreSelection()) { statusEl.textContent = 'Click in the editor first'; return; }
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select some text first'; return; }
-
   const range = sel.getRangeAt(0);
 
-  // If caret is already inside one of our managed spans, just update it
+  // Walk up — if already in a managed span, just nudge it
   let node = range.startContainer;
   while (node && node !== richEditor) {
     if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
@@ -812,19 +746,17 @@ function adjustFontSize(delta) {
     node = node.parentNode;
   }
 
-  const startEl  = range.startContainer.nodeType === 3
+  const startEl = range.startContainer.nodeType === 3
     ? range.startContainer.parentElement : range.startContainer;
-  const basePx   = parseInt(window.getComputedStyle(startEl).fontSize) || 16;
-  const newPx    = Math.max(8, basePx + delta);
+  const newPx = Math.max(8, (parseInt(window.getComputedStyle(startEl).fontSize) || 16) + delta);
 
   const extracted = range.extractContents();
-  const span      = document.createElement('span');
-  span.style.fontSize  = newPx + 'px';
+  const span = document.createElement('span');
+  span.style.fontSize    = newPx + 'px';
   span.dataset.fsManaged = '1';
   span.appendChild(extracted);
   range.insertNode(span);
 
-  // Place caret after the span
   const newRange = document.createRange();
   newRange.selectNodeContents(span);
   newRange.collapse(false);
@@ -837,39 +769,29 @@ function adjustFontSize(delta) {
 }
 
 /* ────────────────────────────────────────────
-   TEXT ALIGNMENT
+   ALIGNMENT
 ──────────────────────────────────────────── */
 function applyAlign(align) {
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
 
-  // Find the block-level element containing the selection
   let node = sel.getRangeAt(0).commonAncestorContainer;
   if (node.nodeType === 3) node = node.parentElement;
-  // Walk up to the direct child of richEditor (the block element)
-  while (node && node.parentElement !== richEditor && node !== richEditor) {
-    node = node.parentElement;
-  }
+  while (node && node.parentElement !== richEditor && node !== richEditor) node = node.parentElement;
+
   if (!node || node === richEditor) {
-    // No block found — wrap in a <p>
     document.execCommand('formatBlock', false, 'p');
     node = sel.getRangeAt(0).commonAncestorContainer;
     if (node.nodeType === 3) node = node.parentElement;
   }
-  if (node && node !== richEditor) {
-    node.style.textAlign = align;
-  }
+  if (node && node !== richEditor) node.style.textAlign = align;
 
-  // Update active state on buttons
-  ['align-left','align-center','align-right'].forEach(id => {
-    document.getElementById(id).classList.remove('active');
-  });
-  const map = { left: 'align-left', center: 'align-center', right: 'align-right' };
+  ['align-left','align-center','align-right'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = { left:'align-left', center:'align-center', right:'align-right' };
   if (map[align]) document.getElementById(map[align]).classList.add('active');
 
-  syncOutput();
-  saveSelection();
+  syncOutput(); saveSelection();
 }
 
 document.getElementById('align-left').addEventListener('click',   () => applyAlign('left'));
@@ -880,7 +802,7 @@ document.getElementById('align-right').addEventListener('click',  () => applyAli
    COLOR
 ──────────────────────────────────────────── */
 colorSwatch.addEventListener('click', () => colorInput.click());
-colorInput.addEventListener('input', () => { colorSwatch.style.background = colorInput.value; });
+colorInput.addEventListener('input',  () => { colorSwatch.style.background = colorInput.value; });
 
 document.getElementById('btn-text-color').addEventListener('click', () => {
   colorMode = 'text';
@@ -896,34 +818,25 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
-  const range     = sel.getRangeAt(0);
+  const range = sel.getRangeAt(0);
   const extracted = range.extractContents();
-  const span      = document.createElement('span');
+  const span = document.createElement('span');
   if (colorMode === 'text') span.style.color = colorInput.value;
   else span.style.backgroundColor = colorInput.value;
   span.appendChild(extracted);
   range.insertNode(span);
-  syncOutput();
-  saveSelection();
+  syncOutput(); saveSelection();
 });
 
 /* ────────────────────────────────────────────
    BOLD / ITALIC / UNDERLINE
 ──────────────────────────────────────────── */
-document.getElementById('bold-btn').addEventListener('click', () => {
-  if (!restoreSelection()) return;
-  document.execCommand('bold');
-  syncOutput(); saveSelection();
-});
-document.getElementById('italic-btn').addEventListener('click', () => {
-  if (!restoreSelection()) return;
-  document.execCommand('italic');
-  syncOutput(); saveSelection();
-});
-document.getElementById('under-btn').addEventListener('click', () => {
-  if (!restoreSelection()) return;
-  document.execCommand('underline');
-  syncOutput(); saveSelection();
+[['bold-btn','bold'],['italic-btn','italic'],['under-btn','underline']].forEach(([id, cmd]) => {
+  document.getElementById(id).addEventListener('click', () => {
+    if (!restoreSelection()) return;
+    document.execCommand(cmd);
+    syncOutput(); saveSelection();
+  });
 });
 
 /* ────────────────────────────────────────────
@@ -933,82 +846,22 @@ function applyClass(className) {
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
-  const range     = sel.getRangeAt(0);
+  const range = sel.getRangeAt(0);
   const extracted = range.extractContents();
-  const p         = document.createElement('p');
+  const p = document.createElement('p');
   p.className = className;
   p.appendChild(extracted);
   range.insertNode(p);
-  syncOutput();
-  saveSelection();
+  syncOutput(); saveSelection();
   statusEl.textContent = `Applied class "${className}"`;
 }
-
-/* ────────────────────────────────────────────
-   SYNC HTML OUTPUT + LIVE PREVIEW
-──────────────────────────────────────────── */
-function syncOutput() {
-  // Pretty-print with basic indentation
-  sourceEditor.value = formatHTML(richEditor.innerHTML);
-  updatePreview();
-}
-
-function updatePreview() {
-  const doc = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="${CSS_URL}">
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; line-height: 1.75; font-size: 15px; }
-  </style>
-</head>
-<body>${richEditor.innerHTML}</body>
-</html>`;
-  previewFrame.srcdoc = doc;
-}
-
-// Lightweight HTML formatter for readability in the output pane
-function formatHTML(html) {
-  let result = '';
-  let indent = 0;
-  const voidEls = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
-  const tokens = html.split(/(<[^>]+>)/g);
-  tokens.forEach(token => {
-    if (!token.trim()) return;
-    if (token.startsWith('</')) {
-      indent = Math.max(0, indent - 1);
-      result += '  '.repeat(indent) + token + '\n';
-    } else if (token.startsWith('<')) {
-      const tagName = (token.match(/<([a-zA-Z0-9-]+)/) || [])[1] || '';
-      result += '  '.repeat(indent) + token + '\n';
-      if (!voidEls.has(tagName.toLowerCase()) && !token.endsWith('/>')) indent++;
-    } else {
-      const t = token.trim();
-      if (t) result += '  '.repeat(indent) + t + '\n';
-    }
-  });
-  return result.trim();
-}
-
-// Copy HTML button
-document.getElementById('copy-html-btn').addEventListener('click', () => {
-  navigator.clipboard.writeText(sourceEditor.value).then(() => {
-    const btn = document.getElementById('copy-html-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy', 1500);
-  });
-});
-
-// Keep HTML pane live as user types
-richEditor.addEventListener('input', syncOutput);
 
 /* ────────────────────────────────────────────
    CLASS PANEL
 ──────────────────────────────────────────── */
 document.getElementById('panel-toggle').addEventListener('click', () => classPanel.classList.toggle('open'));
-document.getElementById('panel-close').addEventListener('click', () => classPanel.classList.remove('open'));
-document.getElementById('refresh-btn').addEventListener('click', loadCSS);
+document.getElementById('panel-close').addEventListener('click',  () => classPanel.classList.remove('open'));
+document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
 
 classSearch.addEventListener('input', () => {
   const q = classSearch.value.toLowerCase();
@@ -1032,6 +885,7 @@ function renderClassList(classes) {
     classListEl.innerHTML = '<div style="padding:14px 6px;font-size:12px;color:#5a4a72">No classes found.</div>';
     return;
   }
+
   const frag = document.createDocumentFragment();
   classes.forEach(cls => {
     const item = document.createElement('div');
@@ -1041,8 +895,8 @@ function renderClassList(classes) {
     header.className = 'class-item-header';
 
     const nameEl = document.createElement('span');
-    nameEl.className = 'class-name';
-    nameEl.title     = '.' + cls.name;
+    nameEl.className   = 'class-name';
+    nameEl.title       = '.' + cls.name;
     nameEl.textContent = '.' + cls.name;
 
     const btn = document.createElement('button');
@@ -1053,45 +907,53 @@ function renderClassList(classes) {
     header.appendChild(nameEl);
     header.appendChild(btn);
 
-    // Preview rendered inside an iframe so the real stylesheet from GitHub applies
-    const previewFrame = document.createElement('iframe');
-    previewFrame.className = 'class-preview-frame';
-    previewFrame.setAttribute('sandbox', 'allow-same-origin');
-    previewFrame.srcdoc = `<!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8">
-<link rel="stylesheet" href="${CSS_URL}">
-<style>body{margin:6px 8px;font-family:system-ui,sans-serif;font-size:12px;background:#fff}</style>
-</head><body><p class="${cls.name}">Preview text — .${cls.name}</p></body></html>`;
+    // Preview iframe — rawCSS injected inline via srcdoc so class styles render correctly
+    const iframe = document.createElement('iframe');
+    iframe.className = 'class-preview-iframe';
+    iframe.srcdoc = buildDoc(
+      `<p class="${cls.name}" style="margin:0">Preview — .${cls.name}</p>`,
+      'font-family:system-ui,sans-serif;font-size:12px;padding:8px 10px;background:rgb(29,12,49);color:#ffffff;'
+    );
+    iframe.addEventListener('load', () => {
+      try {
+        const h = iframe.contentDocument.body.scrollHeight;
+        iframe.style.height = Math.max(36, h + 6) + 'px';
+      } catch(e) {}
+    });
 
     const snippet = document.createElement('div');
     snippet.className   = 'class-css-snippet';
     snippet.textContent = cls.css.length > 130 ? cls.css.slice(0, 130) + '…' : cls.css;
 
     item.appendChild(header);
-    item.appendChild(previewFrame);
+    item.appendChild(iframe);
     item.appendChild(snippet);
     frag.appendChild(item);
   });
+
   classListEl.appendChild(frag);
 }
 
+/* ────────────────────────────────────────────
+   LOAD CSS FROM GITHUB
+──────────────────────────────────────────── */
 async function loadCSS() {
-  panelStatusTx.innerHTML = '<span class="spinner"></span> Loading from GitHub...';
-  classListEl.innerHTML   = '';
+  panelStatus.innerHTML = '<span class="spinner"></span> Loading from GitHub...';
+  classListEl.innerHTML = '';
   try {
     const res = await fetch(CSS_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
     rawCSS     = await res.text();
     allClasses = parseCSSClasses(rawCSS);
     const count = allClasses.length;
-    panelStatusTx.innerHTML = count
+    panelStatus.innerHTML = count
       ? `<span style="color:#86efac">${count} classes loaded</span>`
       : '<span style="color:#7c6a9a">No classes found yet</span>';
     renderClassList(allClasses);
+    updatePreview();
   } catch (e) {
-    panelStatusTx.innerHTML = `<span style="color:#f87171">Load failed: ${e.message}</span>`;
-    classListEl.innerHTML   = '<div style="padding:14px 6px;font-size:12px;color:#7c6a9a">Could not reach GitHub. Make sure the repo is public.</div>';
+    panelStatus.innerHTML = `<span style="color:#f87171">Load failed: ${e.message}</span>`;
+    classListEl.innerHTML = '<div style="padding:14px 6px;font-size:12px;color:#7c6a9a">Could not reach GitHub. Make sure the repo is public.</div>';
   }
 }
 
