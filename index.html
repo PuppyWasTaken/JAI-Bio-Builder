@@ -614,10 +614,14 @@ const ROOT_VARS = `:root {
 }`;
 
 function buildDoc(bodyHTML, bodyCSS) {
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-${ROOT_VARS}
-${rawCSS}
-</style><style>body{${bodyCSS || ''}}</style></head><body>${bodyHTML}</body></html>`;
+  // @import rules MUST be first in a <style> block — extract them from rawCSS
+  const importLines = [];
+  const cleanCSS = rawCSS.replace(/@import\s*[^;]+;/g, match => {
+    importLines.push(match.trim());
+    return '';
+  });
+  const fullCSS = importLines.join('\n') + '\n' + ROOT_VARS + '\n' + cleanCSS;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${fullCSS}</style><style>body{${bodyCSS || ''}}</style></head><body>${bodyHTML}</body></html>`;
 }
 
 /* ────────────────────────────────────────────
@@ -929,6 +933,7 @@ async function loadCSS() {
     panelStatus.innerHTML = count
       ? `<span style="color:#86efac">${count} classes loaded</span>`
       : '<span style="color:#7c6a9a">No classes found yet</span>';
+    // renderClassList AFTER rawCSS is populated so buildDoc has the stylesheet
     renderClassList(allClasses);
     updatePreview();
   } catch (e) {
