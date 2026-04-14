@@ -276,14 +276,14 @@
     --colour-base-white: var(--colour-white);
     --purple-badge: var(--colour-purple-badge)
 }
-
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: #0f0d14;
       color: #e8e0f0;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     /* ── Top bar ── */
@@ -296,24 +296,8 @@
       border-bottom: 1px solid #2e2040;
       flex-shrink: 0;
     }
-    #topbar h1 {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .04em;
-      color: #c084fc;
-    }
-    #topbar span {
-      font-size: 11px;
-      color: #7c6a9a;
-    }
-
-    /* ── App shell ── */
-    #app {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
+    #topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: #c084fc; }
+    #topbar span { font-size: 11px; color: #7c6a9a; }
 
     /* ── Toolbar ── */
     #toolbar {
@@ -334,11 +318,8 @@
       border-right: 1px solid #2e2040;
     }
     .tb-group:last-child { border-right: none; }
-    .tb-label {
-      font-size: 11px;
-      color: #7c6a9a;
-      white-space: nowrap;
-    }
+    .tb-label { font-size: 11px; color: #7c6a9a; white-space: nowrap; }
+
     .tb-btn {
       font-size: 13px;
       font-weight: 600;
@@ -353,6 +334,7 @@
       transition: background .15s, border-color .15s;
     }
     .tb-btn:hover { background: #2a1e40; border-color: #5b3f8a; }
+    .tb-btn.active { background: #3b1f6e; color: #e0b0ff; border-color: #6d28d9; }
 
     #color-picker-wrap { display: flex; align-items: center; gap: 5px; position: relative; }
     #color-swatch {
@@ -365,67 +347,55 @@
     #color-input { width: 0; height: 0; opacity: 0; position: absolute; pointer-events: none; }
 
     .color-mode-btn {
-      font-size: 11px;
-      padding: 3px 8px;
-      border: 1px solid #3a2a52;
-      border-radius: 5px;
-      background: #1e1530;
-      color: #7c6a9a;
-      cursor: pointer;
-      transition: all .15s;
+      font-size: 11px; padding: 3px 8px;
+      border: 1px solid #3a2a52; border-radius: 5px;
+      background: #1e1530; color: #7c6a9a; cursor: pointer; transition: all .15s;
     }
-    .color-mode-btn.active {
-      background: #3b1f6e;
-      color: #c084fc;
-      border-color: #6d28d9;
-    }
+    .color-mode-btn.active { background: #3b1f6e; color: #c084fc; border-color: #6d28d9; }
 
     #panel-toggle {
-      font-size: 12px;
-      padding: 4px 12px;
-      border: 1px solid #3a2a52;
-      border-radius: 6px;
-      background: #1e1530;
-      color: #c084fc;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background .15s;
+      font-size: 12px; padding: 4px 12px;
+      border: 1px solid #3a2a52; border-radius: 6px;
+      background: #1e1530; color: #c084fc; cursor: pointer; white-space: nowrap; transition: background .15s;
     }
     #panel-toggle:hover { background: #2a1e40; }
 
-    /* ── Main area ── */
+    /* ── Main layout ── */
     #main {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
 
-    /* ── Editor pane ── */
+    /* ── Left: editor + html side by side ── */
+    #editor-section {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: row;
+    }
+
+    /* ── Rich editor pane ── */
     #editor-pane {
       display: flex;
       flex-direction: column;
       flex: 1;
       overflow: hidden;
+      border-right: 1px solid #2e2040;
+      min-width: 0;
     }
 
-    #tabs {
-      display: flex;
-      border-bottom: 1px solid #2e2040;
+    #editor-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #7c6a9a;
+      padding: 5px 14px;
       background: #150f20;
+      border-bottom: 1px solid #2e2040;
+      letter-spacing: .04em;
+      text-transform: uppercase;
       flex-shrink: 0;
     }
-    .tab {
-      font-size: 12px;
-      padding: 7px 16px;
-      cursor: pointer;
-      color: #7c6a9a;
-      border-bottom: 2px solid transparent;
-      transition: color .15s;
-    }
-    .tab.active { color: #c084fc; border-bottom-color: #c084fc; }
-    .tab:hover:not(.active) { color: #a78bca; }
-
-    #editor-area { flex: 1; overflow: hidden; display: flex; }
 
     #rich-editor {
       flex: 1;
@@ -443,26 +413,86 @@
       pointer-events: none;
     }
 
+    /* ── HTML output pane ── */
+    #html-pane {
+      display: flex;
+      flex-direction: column;
+      width: 340px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-right: 1px solid #2e2040;
+    }
+
+    #html-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #7c6a9a;
+      padding: 5px 14px;
+      background: #150f20;
+      border-bottom: 1px solid #2e2040;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #copy-html-btn {
+      font-size: 10px;
+      padding: 2px 8px;
+      border: 1px solid #3a2a52;
+      border-radius: 4px;
+      background: #1e1530;
+      color: #7c6a9a;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    #copy-html-btn:hover { background: #2a1e40; color: #c084fc; }
+
     #source-editor {
       flex: 1;
-      padding: 20px 24px;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 12px;
-      line-height: 1.7;
+      padding: 14px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.65;
       border: none;
       background: #0a0810;
       color: #c8b8e8;
       resize: none;
       width: 100%;
-      display: none;
       outline: none;
+      scrollbar-width: thin;
+      scrollbar-color: #3a2a52 transparent;
+    }
+    #source-editor::-webkit-scrollbar { width: 4px; }
+    #source-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
+
+    /* ── Preview pane (right side, shows live render with stylesheet) ── */
+    #preview-pane {
+      display: flex;
+      flex-direction: column;
+      width: 340px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    #preview-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #7c6a9a;
+      padding: 5px 14px;
+      background: #150f20;
+      border-bottom: 1px solid #2e2040;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      flex-shrink: 0;
     }
 
     #preview-frame {
       flex: 1;
       border: none;
       width: 100%;
-      display: none;
       background: #fff;
     }
 
@@ -474,7 +504,6 @@
       border-top: 1px solid #2e2040;
       background: #150f20;
       flex-shrink: 0;
-      min-height: 24px;
     }
 
     /* ── Class panel ── */
@@ -498,249 +527,210 @@
       border-bottom: 1px solid #2e2040;
       flex-shrink: 0;
     }
-    #panel-header h3 {
-      font-size: 13px;
-      font-weight: 600;
-      color: #c084fc;
-      white-space: nowrap;
-    }
+    #panel-header h3 { font-size: 13px; font-weight: 600; color: #c084fc; white-space: nowrap; }
     #panel-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      color: #7c6a9a;
-      line-height: 1;
-      padding: 0 2px;
-      transition: color .15s;
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: #7c6a9a; line-height: 1; padding: 0 2px; transition: color .15s;
     }
     #panel-close:hover { color: #c084fc; }
 
     #panel-status {
-      font-size: 11px;
-      color: #7c6a9a;
-      padding: 6px 14px;
-      border-bottom: 1px solid #2e2040;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      font-size: 11px; color: #7c6a9a;
+      padding: 6px 14px; border-bottom: 1px solid #2e2040;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
     #refresh-btn {
-      font-size: 11px;
-      padding: 2px 8px;
-      border: 1px solid #3a2a52;
-      border-radius: 5px;
-      background: #1e1530;
-      color: #7c6a9a;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: background .15s;
+      font-size: 11px; padding: 2px 8px;
+      border: 1px solid #3a2a52; border-radius: 5px;
+      background: #1e1530; color: #7c6a9a; cursor: pointer; flex-shrink: 0; transition: background .15s;
     }
     #refresh-btn:hover { background: #2a1e40; color: #c084fc; }
 
     #class-search {
-      width: 100%;
-      padding: 7px 14px;
-      font-size: 12px;
-      border: none;
-      border-bottom: 1px solid #2e2040;
-      background: #1a1228;
-      color: #e8e0f0;
-      outline: none;
-      flex-shrink: 0;
+      width: 100%; padding: 7px 14px; font-size: 12px;
+      border: none; border-bottom: 1px solid #2e2040;
+      background: #1a1228; color: #e8e0f0; outline: none; flex-shrink: 0;
     }
     #class-search::placeholder { color: #4a3a62; }
 
     #class-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px;
-      scrollbar-width: thin;
-      scrollbar-color: #3a2a52 transparent;
+      max-height:100vh;
+      flex: 1; overflow-y: auto; padding: 6px;
+      scrollbar-width: thin; scrollbar-color: #3a2a52 transparent;
     }
     #class-list::-webkit-scrollbar { width: 4px; }
     #class-list::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
 
     .class-item {
-      margin-bottom: 6px;
-      border: 1px solid #2e2040;
-      border-radius: 7px;
-      overflow: hidden;
-      transition: border-color .15s;
+      margin-bottom: 6px; border: 1px solid #2e2040;
+      border-radius: 7px; overflow: hidden; transition: border-color .15s;
     }
     .class-item:hover { border-color: #5b3f8a; }
 
     .class-item-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 5px 8px;
-      background: #1a1228;
-      gap: 6px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 8px; background: #1a1228; gap: 6px;
     }
     .class-name {
-      font-size: 11px;
-      font-family: 'JetBrains Mono', monospace;
-      color: #c084fc;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-      min-width: 0;
+      font-size: 11px; font-family: 'JetBrains Mono', monospace;
+      color: #c084fc; font-weight: 500;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
     }
     .apply-btn {
-      font-size: 10px;
-      padding: 2px 9px;
-      border: 1px solid #3a2a52;
-      border-radius: 4px;
-      background: #150f20;
-      color: #a78bca;
-      cursor: pointer;
-      flex-shrink: 0;
-      white-space: nowrap;
-      transition: all .15s;
+      font-size: 10px; padding: 2px 9px;
+      border: 1px solid #3a2a52; border-radius: 4px;
+      background: #150f20; color: #a78bca; cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: all .15s;
     }
     .apply-btn:hover { background: #3b1f6e; color: #e0b0ff; border-color: #6d28d9; }
 
-    .class-preview {
-      padding: 8px 10px;
-      font-size: 12px;
-      word-break: break-word;
-      line-height: 1.5;
-      background: #fff;
-      color: #111;
-      min-height: 30px;
+    /* The class preview renders inside an iframe so the real stylesheet applies */
+    .class-preview-frame {
+      width: 100%;
+      height: 60px;
+      border: none;
+      display: block;
+      background:rgb(29, 12, 49);
+      color:white;
     }
+
     .class-css-snippet {
       padding: 4px 8px 5px;
-      font-size: 9.5px;
-      font-family: 'JetBrains Mono', monospace;
-      color: #5a4a72;
-      border-top: 1px solid #2e2040;
-      background: #0f0a1a;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 44px;
-      overflow: hidden;
+      font-size: 9.5px; font-family: 'JetBrains Mono', monospace;
+      color: #5a4a72; border-top: 1px solid #2e2040;
+      background: #0f0a1a; white-space: pre-wrap; word-break: break-all;
+      max-height: 40px; overflow: hidden;
     }
 
     .spinner {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border: 1.5px solid #3a2a52;
-      border-top-color: #c084fc;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      flex-shrink: 0;
+      display: inline-block; width: 10px; height: 10px;
+      border: 1.5px solid #3a2a52; border-top-color: #c084fc;
+      border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Scrollbars in editor ── */
-    #rich-editor::-webkit-scrollbar,
-    #source-editor::-webkit-scrollbar { width: 4px; }
-    #rich-editor::-webkit-scrollbar-thumb,
-    #source-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
+    #rich-editor::-webkit-scrollbar { width: 4px; }
+    #rich-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
   </style>
 </head>
 <body>
 
 <div id="topbar">
   <h1>JAI Bio Builder</h1>
-  <span>Select text → apply formatting, colors, font sizes, or CSS classes</span>
+  <span>Select text → apply formatting, colors, font sizes, alignment, or CSS classes</span>
 </div>
 
-<div id="app">
-  <div id="toolbar">
-    <div class="tb-group">
-      <span class="tb-label">Size</span>
-      <button class="tb-btn" id="font-dec">−</button>
-      <span id="font-size-display" style="font-size:12px;min-width:36px;text-align:center;color:#7c6a9a">—</span>
-      <button class="tb-btn" id="font-inc">+</button>
-    </div>
-    <div class="tb-group">
-      <span class="tb-label">Color</span>
-      <div id="color-picker-wrap">
-        <div id="color-swatch"></div>
-        <input type="color" id="color-input" value="#e05c94">
-      </div>
-      <button class="color-mode-btn active" id="btn-text-color">Text</button>
-      <button class="color-mode-btn" id="btn-bg-color">Highlight</button>
-      <button class="tb-btn" id="apply-color-btn">Apply</button>
-    </div>
-    <div class="tb-group">
-      <button class="tb-btn" id="bold-btn" style="font-weight:700">B</button>
-      <button class="tb-btn" id="italic-btn" style="font-style:italic">I</button>
-      <button class="tb-btn" id="under-btn" style="text-decoration:underline">U</button>
-    </div>
-    <div class="tb-group">
-      <button id="panel-toggle">Classes ›</button>
-    </div>
+<div id="toolbar">
+  <div class="tb-group">
+    <span class="tb-label">Size</span>
+    <button class="tb-btn" id="font-dec">−</button>
+    <span id="font-size-display" style="font-size:12px;min-width:36px;text-align:center;color:#7c6a9a">—</span>
+    <button class="tb-btn" id="font-inc">+</button>
   </div>
+  <div class="tb-group">
+    <span class="tb-label">Align</span>
+    <button class="tb-btn" id="align-left" title="Align left">&#8676;</button>
+    <button class="tb-btn" id="align-center" title="Align center">&#8652;</button>
+    <button class="tb-btn" id="align-right" title="Align right">&#8677;</button>
+  </div>
+  <div class="tb-group">
+    <span class="tb-label">Color</span>
+    <div id="color-picker-wrap">
+      <div id="color-swatch"></div>
+      <input type="color" id="color-input" value="#e05c94">
+    </div>
+    <button class="color-mode-btn active" id="btn-text-color">Text</button>
+    <button class="color-mode-btn" id="btn-bg-color">Highlight</button>
+    <button class="tb-btn" id="apply-color-btn">Apply</button>
+  </div>
+  <div class="tb-group">
+    <button class="tb-btn" id="bold-btn" style="font-weight:700">B</button>
+    <button class="tb-btn" id="italic-btn" style="font-style:italic">I</button>
+    <button class="tb-btn" id="under-btn" style="text-decoration:underline">U</button>
+  </div>
+  <div class="tb-group">
+    <button id="panel-toggle">Classes ›</button>
+  </div>
+</div>
 
-  <div id="main">
+<div id="main">
+  <div id="editor-section">
+
+    <!-- Rich editor -->
     <div id="editor-pane">
-      <div id="tabs">
-        <div class="tab active" data-tab="rich">Edit</div>
-        <div class="tab" data-tab="source">HTML</div>
-        <div class="tab" data-tab="preview">Preview</div>
-      </div>
-      <div id="editor-area">
-        <div id="rich-editor" contenteditable="true" spellcheck="true">
-          <p>Start typing your bio here. <strong>Select any text</strong> to apply formatting, colors, font sizes, or CSS classes using the toolbar above.</p>
-        </div>
-        <textarea id="source-editor" spellcheck="false"></textarea>
-        <iframe id="preview-frame" sandbox="allow-same-origin"></iframe>
+      <div id="editor-label">Edit</div>
+      <div id="rich-editor" contenteditable="true" spellcheck="true">
+        <p>Start typing your bio here. <strong>Select any text</strong> to apply formatting, colors, font sizes, alignment, or CSS classes using the toolbar above.</p>
       </div>
       <div id="status">Select text to apply formatting</div>
     </div>
 
-    <div id="class-panel">
-      <div id="panel-header">
-        <h3>CSS Classes</h3>
-        <button id="panel-close">×</button>
+    <!-- HTML output -->
+    <div id="html-pane">
+      <div id="html-label">
+        HTML Output
+        <button id="copy-html-btn">Copy</button>
       </div>
-      <div id="panel-status">
-        <span id="panel-status-text" style="display:flex;align-items:center;gap:6px">
-          <span class="spinner"></span> Loading from GitHub...
-        </span>
-        <button id="refresh-btn">↺ Reload</button>
-      </div>
-      <input id="class-search" type="text" placeholder="Search classes...">
-      <div id="class-list"></div>
+      <textarea id="source-editor" spellcheck="false" readonly></textarea>
     </div>
+
+    <!-- Live preview -->
+    <div id="preview-pane">
+      <div id="preview-label">Preview (with stylesheet)</div>
+      <iframe id="preview-frame" sandbox="allow-same-origin" title="Live preview"></iframe>
+    </div>
+
+  </div>
+
+  <!-- Class panel -->
+  <div id="class-panel">
+    <div id="panel-header">
+      <h3>CSS Classes</h3>
+      <button id="panel-close">×</button>
+    </div>
+    <div id="panel-status">
+      <span id="panel-status-text" style="display:flex;align-items:center;gap:6px">
+        <span class="spinner"></span> Loading from GitHub...
+      </span>
+      <button id="refresh-btn">↺ Reload</button>
+    </div>
+    <input id="class-search" type="text" placeholder="Search classes...">
+    <div id="class-list"></div>
   </div>
 </div>
 
 <script>
 const CSS_URL = 'https://raw.githubusercontent.com/PuppyWasTaken/JAI-Bio-Builder/main/jai_site_stylesheet.css';
-const richEditor = document.getElementById('rich-editor');
-const sourceEditor = document.getElementById('source-editor');
-const previewFrame = document.getElementById('preview-frame');
-const statusEl = document.getElementById('status');
-const colorSwatch = document.getElementById('color-swatch');
-const colorInput = document.getElementById('color-input');
-const fontSizeDisplay = document.getElementById('font-size-display');
-const classSearch = document.getElementById('class-search');
-const classListEl = document.getElementById('class-list');
-const panelStatusText = document.getElementById('panel-status-text');
-const classPanel = document.getElementById('class-panel');
+
+const richEditor    = document.getElementById('rich-editor');
+const sourceEditor  = document.getElementById('source-editor');
+const previewFrame  = document.getElementById('preview-frame');
+const statusEl      = document.getElementById('status');
+const colorSwatch   = document.getElementById('color-swatch');
+const colorInput    = document.getElementById('color-input');
+const fontSizeDisp  = document.getElementById('font-size-display');
+const classSearch   = document.getElementById('class-search');
+const classListEl   = document.getElementById('class-list');
+const panelStatusTx = document.getElementById('panel-status-text');
+const classPanel    = document.getElementById('class-panel');
 
 let savedRange = null;
-let colorMode = 'text';
+let colorMode  = 'text';
 let allClasses = [];
+let rawCSS     = '';
 
 colorSwatch.style.background = colorInput.value;
 
-/* ── Selection ── */
+/* ────────────────────────────────────────────
+   SELECTION HELPERS
+──────────────────────────────────────────── */
 function saveSelection() {
   const sel = window.getSelection();
   if (sel && sel.rangeCount > 0) {
     savedRange = sel.getRangeAt(0).cloneRange();
     const txt = savedRange.toString();
-    statusEl.textContent = txt ? `Selected: "${txt.slice(0,60)}${txt.length>60?'…':''}"` : 'Cursor placed';
+    statusEl.textContent = txt
+      ? `Selected: "${txt.slice(0, 70)}${txt.length > 70 ? '…' : ''}"`
+      : 'Cursor placed';
     updateFontSizeDisplay();
   }
 }
@@ -755,16 +745,18 @@ function restoreSelection() {
 }
 
 function updateFontSizeDisplay() {
-  if (!savedRange || savedRange.collapsed) { fontSizeDisplay.textContent = '—'; return; }
-  const container = savedRange.commonAncestorContainer;
-  const el = container.nodeType === 3 ? container.parentElement : container;
-  fontSizeDisplay.textContent = window.getComputedStyle(el).fontSize || '—';
+  if (!savedRange || savedRange.collapsed) { fontSizeDisp.textContent = '—'; return; }
+  const node = savedRange.startContainer;
+  const el   = node.nodeType === 3 ? node.parentElement : node;
+  fontSizeDisp.textContent = window.getComputedStyle(el).fontSize || '—';
 }
 
 richEditor.addEventListener('mouseup', saveSelection);
-richEditor.addEventListener('keyup', saveSelection);
+richEditor.addEventListener('keyup',   saveSelection);
 
-/* ── Font size — robust approach using execCommand fontSize then swap ── */
+/* ────────────────────────────────────────────
+   FONT SIZE
+──────────────────────────────────────────── */
 document.getElementById('font-inc').addEventListener('click', () => adjustFontSize(2));
 document.getElementById('font-dec').addEventListener('click', () => adjustFontSize(-2));
 
@@ -775,43 +767,31 @@ function adjustFontSize(delta) {
 
   const range = sel.getRangeAt(0);
 
-  // Check if the entire selection is already inside one of our font-size spans
-  // Walk up from the start container
-  let existingSpan = null;
+  // If caret is already inside one of our managed spans, just update it
   let node = range.startContainer;
   while (node && node !== richEditor) {
     if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
-      existingSpan = node;
-      break;
+      const next = Math.max(8, (parseInt(node.style.fontSize) || 16) + delta);
+      node.style.fontSize = next + 'px';
+      fontSizeDisp.textContent = next + 'px';
+      syncOutput(); return;
     }
     node = node.parentNode;
   }
 
-  if (existingSpan) {
-    const cur = parseInt(existingSpan.style.fontSize) || 16;
-    const next = Math.max(8, cur + delta);
-    existingSpan.style.fontSize = next + 'px';
-    fontSizeDisplay.textContent = next + 'px';
-    syncSource();
-    return;
-  }
+  const startEl  = range.startContainer.nodeType === 3
+    ? range.startContainer.parentElement : range.startContainer;
+  const basePx   = parseInt(window.getComputedStyle(startEl).fontSize) || 16;
+  const newPx    = Math.max(8, basePx + delta);
 
-  // Get computed size of the selection's start node to base the new size on
-  const startEl = range.startContainer.nodeType === 3
-    ? range.startContainer.parentElement
-    : range.startContainer;
-  const basePx = parseInt(window.getComputedStyle(startEl).fontSize) || 16;
-  const newPx = Math.max(8, basePx + delta);
-
-  // Extract the range contents, wrap in a span, reinsert
   const extracted = range.extractContents();
-  const span = document.createElement('span');
-  span.style.fontSize = newPx + 'px';
+  const span      = document.createElement('span');
+  span.style.fontSize  = newPx + 'px';
   span.dataset.fsManaged = '1';
   span.appendChild(extracted);
   range.insertNode(span);
 
-  // Move caret to end of inserted span
+  // Place caret after the span
   const newRange = document.createRange();
   newRange.selectNodeContents(span);
   newRange.collapse(false);
@@ -819,11 +799,53 @@ function adjustFontSize(delta) {
   sel.addRange(newRange);
   savedRange = newRange.cloneRange();
 
-  fontSizeDisplay.textContent = newPx + 'px';
-  syncSource();
+  fontSizeDisp.textContent = newPx + 'px';
+  syncOutput();
 }
 
-/* ── Color ── */
+/* ────────────────────────────────────────────
+   TEXT ALIGNMENT
+──────────────────────────────────────────── */
+function applyAlign(align) {
+  if (!restoreSelection()) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+
+  // Find the block-level element containing the selection
+  let node = sel.getRangeAt(0).commonAncestorContainer;
+  if (node.nodeType === 3) node = node.parentElement;
+  // Walk up to the direct child of richEditor (the block element)
+  while (node && node.parentElement !== richEditor && node !== richEditor) {
+    node = node.parentElement;
+  }
+  if (!node || node === richEditor) {
+    // No block found — wrap in a <p>
+    document.execCommand('formatBlock', false, 'p');
+    node = sel.getRangeAt(0).commonAncestorContainer;
+    if (node.nodeType === 3) node = node.parentElement;
+  }
+  if (node && node !== richEditor) {
+    node.style.textAlign = align;
+  }
+
+  // Update active state on buttons
+  ['align-left','align-center','align-right'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  const map = { left: 'align-left', center: 'align-center', right: 'align-right' };
+  if (map[align]) document.getElementById(map[align]).classList.add('active');
+
+  syncOutput();
+  saveSelection();
+}
+
+document.getElementById('align-left').addEventListener('click',   () => applyAlign('left'));
+document.getElementById('align-center').addEventListener('click', () => applyAlign('center'));
+document.getElementById('align-right').addEventListener('click',  () => applyAlign('right'));
+
+/* ────────────────────────────────────────────
+   COLOR
+──────────────────────────────────────────── */
 colorSwatch.addEventListener('click', () => colorInput.click());
 colorInput.addEventListener('input', () => { colorSwatch.style.background = colorInput.value; });
 
@@ -841,83 +863,116 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
-  const range = sel.getRangeAt(0);
+  const range     = sel.getRangeAt(0);
   const extracted = range.extractContents();
-  const span = document.createElement('span');
+  const span      = document.createElement('span');
   if (colorMode === 'text') span.style.color = colorInput.value;
   else span.style.backgroundColor = colorInput.value;
   span.appendChild(extracted);
   range.insertNode(span);
-  syncSource();
+  syncOutput();
   saveSelection();
 });
 
-/* ── Bold / italic / underline ── */
+/* ────────────────────────────────────────────
+   BOLD / ITALIC / UNDERLINE
+──────────────────────────────────────────── */
 document.getElementById('bold-btn').addEventListener('click', () => {
   if (!restoreSelection()) return;
   document.execCommand('bold');
-  syncSource();
-  saveSelection();
+  syncOutput(); saveSelection();
 });
 document.getElementById('italic-btn').addEventListener('click', () => {
   if (!restoreSelection()) return;
   document.execCommand('italic');
-  syncSource();
-  saveSelection();
+  syncOutput(); saveSelection();
 });
 document.getElementById('under-btn').addEventListener('click', () => {
   if (!restoreSelection()) return;
   document.execCommand('underline');
-  syncSource();
-  saveSelection();
+  syncOutput(); saveSelection();
 });
 
-/* ── Apply CSS class ── */
+/* ────────────────────────────────────────────
+   APPLY CSS CLASS
+──────────────────────────────────────────── */
 function applyClass(className) {
   if (!restoreSelection()) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
-  const range = sel.getRangeAt(0);
+  const range     = sel.getRangeAt(0);
   const extracted = range.extractContents();
-  const p = document.createElement('p');
+  const p         = document.createElement('p');
   p.className = className;
   p.appendChild(extracted);
   range.insertNode(p);
-  syncSource();
+  syncOutput();
   saveSelection();
   statusEl.textContent = `Applied class "${className}"`;
 }
 
-/* ── Sync ── */
-function syncSource() {
-  sourceEditor.value = richEditor.innerHTML;
+/* ────────────────────────────────────────────
+   SYNC HTML OUTPUT + LIVE PREVIEW
+──────────────────────────────────────────── */
+function syncOutput() {
+  // Pretty-print with basic indentation
+  sourceEditor.value = formatHTML(richEditor.innerHTML);
   updatePreview();
 }
-function syncRich() {
-  richEditor.innerHTML = sourceEditor.value;
-  updatePreview();
-}
+
 function updatePreview() {
-  const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><link rel="stylesheet" href="${CSS_URL}"><style>body{font-family:system-ui,sans-serif;padding:20px;line-height:1.7;font-size:15px}</style></head><body>${richEditor.innerHTML}</body></html>`;
+  const doc = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="${CSS_URL}">
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; line-height: 1.75; font-size: 15px; }
+  </style>
+</head>
+<body>${richEditor.innerHTML}</body>
+</html>`;
   previewFrame.srcdoc = doc;
 }
-sourceEditor.addEventListener('input', syncRich);
 
-/* ── Tabs ── */
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const t = tab.dataset.tab;
-    richEditor.style.display   = t === 'rich'    ? '' : 'none';
-    sourceEditor.style.display = t === 'source'  ? '' : 'none';
-    previewFrame.style.display = t === 'preview' ? '' : 'none';
-    if (t === 'source')  sourceEditor.value = richEditor.innerHTML;
-    if (t === 'preview') updatePreview();
+// Lightweight HTML formatter for readability in the output pane
+function formatHTML(html) {
+  let result = '';
+  let indent = 0;
+  const voidEls = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  const tokens = html.split(/(<[^>]+>)/g);
+  tokens.forEach(token => {
+    if (!token.trim()) return;
+    if (token.startsWith('</')) {
+      indent = Math.max(0, indent - 1);
+      result += '  '.repeat(indent) + token + '\n';
+    } else if (token.startsWith('<')) {
+      const tagName = (token.match(/<([a-zA-Z0-9-]+)/) || [])[1] || '';
+      result += '  '.repeat(indent) + token + '\n';
+      if (!voidEls.has(tagName.toLowerCase()) && !token.endsWith('/>')) indent++;
+    } else {
+      const t = token.trim();
+      if (t) result += '  '.repeat(indent) + t + '\n';
+    }
+  });
+  return result.trim();
+}
+
+// Copy HTML button
+document.getElementById('copy-html-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(sourceEditor.value).then(() => {
+    const btn = document.getElementById('copy-html-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
   });
 });
 
-/* ── Class panel ── */
+// Keep HTML pane live as user types
+richEditor.addEventListener('input', syncOutput);
+
+/* ────────────────────────────────────────────
+   CLASS PANEL
+──────────────────────────────────────────── */
 document.getElementById('panel-toggle').addEventListener('click', () => classPanel.classList.toggle('open'));
 document.getElementById('panel-close').addEventListener('click', () => classPanel.classList.remove('open'));
 document.getElementById('refresh-btn').addEventListener('click', loadCSS);
@@ -932,8 +987,8 @@ function parseCSSClasses(cssText) {
   const re = /\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)\s*\{([^}]*)\}/g;
   let m;
   while ((m = re.exec(cssText)) !== null) {
-    const name = m[1], css = m[2].trim().replace(/\s+/g,' ');
-    if (!seen.has(name)) { seen.add(name); results.push({name, css}); }
+    const name = m[1], css = m[2].trim().replace(/\s+/g, ' ');
+    if (!seen.has(name)) { seen.add(name); results.push({ name, css }); }
   }
   return results;
 }
@@ -941,34 +996,47 @@ function parseCSSClasses(cssText) {
 function renderClassList(classes) {
   classListEl.innerHTML = '';
   if (!classes.length) {
-    classListEl.innerHTML = '<div style="padding:12px 4px;font-size:12px;color:var(--color-text-secondary)">No classes found.</div>';
+    classListEl.innerHTML = '<div style="padding:14px 6px;font-size:12px;color:#5a4a72">No classes found.</div>';
     return;
   }
   const frag = document.createDocumentFragment();
   classes.forEach(cls => {
     const item = document.createElement('div');
     item.className = 'class-item';
+
     const header = document.createElement('div');
     header.className = 'class-item-header';
+
     const nameEl = document.createElement('span');
     nameEl.className = 'class-name';
-    nameEl.title = '.' + cls.name;
+    nameEl.title     = '.' + cls.name;
     nameEl.textContent = '.' + cls.name;
+
     const btn = document.createElement('button');
-    btn.className = 'apply-btn';
+    btn.className   = 'apply-btn';
     btn.textContent = 'Apply';
     btn.addEventListener('click', e => { e.stopPropagation(); applyClass(cls.name); });
+
     header.appendChild(nameEl);
     header.appendChild(btn);
-    const preview = document.createElement('div');
-    preview.className = 'class-preview';
-    try { preview.style.cssText = cls.css; } catch(e){}
-    preview.textContent = 'Preview text';
+
+    // Preview rendered inside an iframe so the real stylesheet from GitHub applies
+    const previewFrame = document.createElement('iframe');
+    previewFrame.className = 'class-preview-frame';
+    previewFrame.setAttribute('sandbox', 'allow-same-origin');
+    previewFrame.srcdoc = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="${CSS_URL}">
+<style>body{margin:6px 8px;font-family:system-ui,sans-serif;font-size:12px;background:#fff}</style>
+</head><body><p class="${cls.name}">Preview text — .${cls.name}</p></body></html>`;
+
     const snippet = document.createElement('div');
-    snippet.className = 'class-css-snippet';
-    snippet.textContent = cls.css.length > 120 ? cls.css.slice(0,120)+'…' : cls.css;
+    snippet.className   = 'class-css-snippet';
+    snippet.textContent = cls.css.length > 130 ? cls.css.slice(0, 130) + '…' : cls.css;
+
     item.appendChild(header);
-    item.appendChild(preview);
+    item.appendChild(previewFrame);
     item.appendChild(snippet);
     frag.appendChild(item);
   });
@@ -976,26 +1044,26 @@ function renderClassList(classes) {
 }
 
 async function loadCSS() {
-  panelStatusText.innerHTML = '<span class="spinner"></span> Loading...';
-  classListEl.innerHTML = '';
+  panelStatusTx.innerHTML = '<span class="spinner"></span> Loading from GitHub...';
+  classListEl.innerHTML   = '';
   try {
     const res = await fetch(CSS_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    allClasses = parseCSSClasses(text);
+    rawCSS     = await res.text();
+    allClasses = parseCSSClasses(rawCSS);
     const count = allClasses.length;
-    panelStatusText.innerHTML = count
-      ? `<span style="color:var(--color-text-success)">${count} classes loaded</span>`
-      : '<span style="color:var(--color-text-secondary)">No classes found</span>';
+    panelStatusTx.innerHTML = count
+      ? `<span style="color:#86efac">${count} classes loaded</span>`
+      : '<span style="color:#7c6a9a">No classes found yet</span>';
     renderClassList(allClasses);
-  } catch(e) {
-    panelStatusText.innerHTML = `<span style="color:var(--color-text-danger)">Load failed: ${e.message}</span>`;
-    classListEl.innerHTML = '<div style="padding:12px 4px;font-size:12px;color:var(--color-text-secondary)">Could not reach GitHub. Check the repo is public.</div>';
+  } catch (e) {
+    panelStatusTx.innerHTML = `<span style="color:#f87171">Load failed: ${e.message}</span>`;
+    classListEl.innerHTML   = '<div style="padding:14px 6px;font-size:12px;color:#7c6a9a">Could not reach GitHub. Make sure the repo is public.</div>';
   }
 }
 
 loadCSS();
-updatePreview();
+syncOutput();
 </script>
 </body>
 </html>
