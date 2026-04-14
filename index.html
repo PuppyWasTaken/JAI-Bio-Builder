@@ -392,10 +392,10 @@ footer {
 
     <div id="html-pane">
       <div class="pane-label">
-        HTML Output
+        HTML Output <span style="font-size:9px;color:#5b3f8a;font-weight:400;text-transform:none;letter-spacing:0">(editable)</span>
         <button id="copy-html-btn">Copy</button>
       </div>
-      <textarea id="source-editor" spellcheck="false" readonly></textarea>
+      <textarea id="source-editor" spellcheck="false"></textarea>
     </div>
 
     <div id="preview-pane">
@@ -748,6 +748,38 @@ function syncOutput() {
 }
 
 richEditor.addEventListener('input', syncOutput);
+
+/* ────────────────────────────────────────────
+   REVERSE SYNC: HTML textarea → rich editor + preview
+──────────────────────────────────────────── */
+let _htmlEditTimer = null;
+sourceEditor.addEventListener('input', () => {
+  clearTimeout(_htmlEditTimer);
+  _htmlEditTimer = setTimeout(() => {
+    // Only sync back if the textarea is actually focused (user is editing it)
+    if (document.activeElement !== sourceEditor) return;
+    pushUndo();
+    richEditor.innerHTML = sourceEditor.value;
+    updatePreview();
+    statusEl.textContent = 'HTML applied to editor';
+  }, 400);
+});
+
+/* When the textarea loses focus, do a final sync to clean up formatting */
+sourceEditor.addEventListener('blur', () => {
+  clearTimeout(_htmlEditTimer);
+  if (sourceEditor.dataset.userEdited === '1') {
+    richEditor.innerHTML = sourceEditor.value;
+    // Reformat the HTML neatly
+    sourceEditor.value = formatHTML(richEditor.innerHTML);
+    updatePreview();
+    sourceEditor.dataset.userEdited = '';
+  }
+});
+
+sourceEditor.addEventListener('focus', () => {
+  sourceEditor.dataset.userEdited = '1';
+});
 
 document.getElementById('copy-html-btn').addEventListener('click', () => {
   navigator.clipboard.writeText(sourceEditor.value).then(() => {
