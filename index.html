@@ -703,7 +703,7 @@ function buildDoc(bodyHTML, bodyCSS) {
     return '';
   });
   const fullCSS = importLines.join('\n') + '\n' + ROOT_VARS + '\n' + cleanCSS;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${fullCSS}</style><style>body{${bodyCSS || ''}}</style></head><body>${bodyHTML}</body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${fullCSS}</style><style>body{${bodyCSS || ''}}img{max-width:100%;}</style></head><body>${bodyHTML}</body></html>`;
 }
 
 /* ────────────────────────────────────────────
