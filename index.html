@@ -365,6 +365,7 @@ footer {
   </div>
   <div class="tb-group">
     <button class="tb-btn" id="undo-btn" title="Undo (Ctrl+Z)">↩ Undo</button>
+    <button class="tb-btn" id="redo-btn" title="Redo (Ctrl+Y)">↪ Redo</button>
   </div>
   <div class="tb-group">
     <button class="tb-btn" id="bold-btn" style="font-weight:700" title="Bold (Ctrl+B)">B</button>
@@ -1010,6 +1011,7 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
    UNDO STACK
 ──────────────────────────────────────────── */
 const undoStack = [];
+const redoStack = [];
 let lastHTML = richEditor.innerHTML;
 let undoPushTimer = null;
 
@@ -1018,6 +1020,7 @@ function pushUndo() {
   if (current === lastHTML) return;
   undoStack.push(lastHTML);
   if (undoStack.length > 100) undoStack.shift();
+  redoStack.length = 0; // clear redo on new action
   lastHTML = current;
 }
 
@@ -1030,6 +1033,7 @@ function performUndo() {
   clearTimeout(undoPushTimer);
   pushUndo(); // capture any pending state first
   if (!undoStack.length) { statusEl.textContent = 'Nothing to undo'; return; }
+  redoStack.push(richEditor.innerHTML);
   const prev = undoStack.pop();
   richEditor.innerHTML = prev;
   lastHTML = prev;
@@ -1037,13 +1041,30 @@ function performUndo() {
   statusEl.textContent = 'Undo applied';
 }
 
+function performRedo() {
+  if (!redoStack.length) { statusEl.textContent = 'Nothing to redo'; return; }
+  undoStack.push(richEditor.innerHTML);
+  const next = redoStack.pop();
+  richEditor.innerHTML = next;
+  lastHTML = next;
+  syncOutput();
+  statusEl.textContent = 'Redo applied';
+}
+
 document.getElementById('undo-btn').addEventListener('click', performUndo);
+document.getElementById('redo-btn').addEventListener('click', performRedo);
 
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
     if (document.activeElement === richEditor || richEditor.contains(document.activeElement)) {
       e.preventDefault();
       performUndo();
+    }
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    if (document.activeElement === richEditor || richEditor.contains(document.activeElement)) {
+      e.preventDefault();
+      performRedo();
     }
   }
 });
