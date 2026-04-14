@@ -611,13 +611,36 @@
 
     #rich-editor::-webkit-scrollbar { width: 4px; }
     #rich-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
+  footer {
+    padding: 0.75rem 2.5rem;
+    font-size: 0.7rem;
+    color: white;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+    footer span {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+    footer .dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: white;
+}
+    a {
+    color: #6df2e1;
+    text-decoration: 1px underline;
+}
   </style>
 </head>
 <body>
 
 <div id="topbar">
   <h1>JAI Bio Builder</h1>
-  <span>Select text → apply formatting, colors, font sizes, alignment, or CSS classes</span>
+  <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
 </div>
 
 <div id="toolbar">
@@ -699,6 +722,15 @@
   </div>
 </div>
 
+<footer>
+  <span>No official affiliation to JAI</span>
+  <span class="dot"></span>
+  <span>No data is sent anywhere</span>
+  <span class="dot"></span>
+  <span>Handles CSS, HTML, JSX, SCSS</span>
+  <span class="dot"></span>
+  <span>Made and Maintained by <a href="https://puppy.uwu.ai/">Permanent</a></span>
+</footer>
 <script>
 const CSS_URL = 'https://raw.githubusercontent.com/PuppyWasTaken/JAI-Bio-Builder/main/jai_site_stylesheet.css';
 
