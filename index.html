@@ -27,7 +27,7 @@
       border-bottom: 1px solid #2e2040;
       flex-shrink: 0;
     }
-    #topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: #c084fc; text-transform:uppercase;font-family:monospace; }
+    #topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: #c084fc; text-transform:uppercase;font-family:monospace; text-align: center;}
     #topbar span { font-size: 11px; color: #7c6a9a; }
 
     /* ── Toolbar ── */
@@ -93,7 +93,17 @@
 
     /* ── Main layout ── */
     #main { display: flex; flex: 1; overflow: hidden; }
-    #editor-section { display: flex; flex: 1; overflow: hidden; }
+    #editor-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0px 0px;
+    grid-template-areas:
+        "editor preview"
+        "editor html";
+    flex: 1;
+    overflow: hidden;
+}
 
     /* ── Rich editor pane ── */
     #editor-pane {
@@ -101,6 +111,7 @@
       flex: 1; overflow: hidden;
       border-right: 1px solid #2e2040;
       min-width: 0;
+	  grid-area:editor;
     }
     .pane-label {
       font-size: 11px; font-weight: 600; color: #7c6a9a;
@@ -121,11 +132,16 @@
     #rich-editor::-webkit-scrollbar-thumb { background: #3a2a52; border-radius: 4px; }
 
     /* ── HTML output pane ── */
-    #html-pane {
-      display: flex; flex-direction: column;
-      width: 300px; flex-shrink: 0; overflow: hidden;
-      border-right: 1px solid #2e2040;
-    }
+	#html-pane {
+	    display: flex;
+	    flex-direction: column;
+	    width: 100%;
+	    min-width: 300px;
+	    flex-shrink: 0;
+	    overflow: hidden;
+	    border-right: 1px solid #2e2040;
+	    grid-area: html;
+	}
     #source-editor {
       flex: 1; padding: 14px;
       font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
@@ -147,10 +163,16 @@
     #copy-html-btn:hover { background: #2a1e40; color: #c084fc; }
 
     /* ── Preview pane ── */
-    #preview-pane {
-      display: flex; flex-direction: column;
-      width: 320px; flex-shrink: 0; overflow: hidden;
-    }
+	#preview-pane {
+	    display: flex;
+	    flex-direction: column;
+	    width: 320px;
+	    flex-shrink: 0;
+	    overflow: hidden;
+	    width: 100%;
+	    min-width: 300px;
+	    grid-area: preview;
+	}
     #preview-frame {
       flex: 1; border: none; width: 100%;
     }
@@ -288,6 +310,17 @@ footer {
     justify-content: center;
     flex-shrink: 0;
 }
+@media screen and (max-width:700px){
+#editor-section{
+	    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-areas:
+        "editor"
+        "preview"
+        "html";
+}
+	footer{gap:2px;justify-content: center;}
+}
   </style>
 </head>
 <body>
@@ -382,8 +415,6 @@ footer {
 
 <footer>
   <span>No official affiliation to JAI</span>
-  <span class="dot"></span>
-  <span>No data is sent anywhere</span>
   <span class="dot"></span>
   <span>Experimental! Use at your own discretion</span>
   <span class="dot"></span>
