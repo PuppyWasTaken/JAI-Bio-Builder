@@ -1093,35 +1093,43 @@ function applyClass(className) {
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
   const range = sel.getRangeAt(0);
 
-  // Check if the selection is entirely within a single existing block element
+  // Walk up from the common ancestor to find the nearest block element inside the editor
+  const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE']);
   let container = range.commonAncestorContainer;
   if (container.nodeType === Node.TEXT_NODE) container = container.parentElement;
-  // Walk up to find the nearest block-level element inside the editor
-  const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE']);
   let block = container;
   while (block && block !== richEditor && !blockTags.has(block.tagName)) {
     block = block.parentElement;
   }
 
-  if (block && block !== richEditor && blockTags.has(block.tagName)) {
-    // Selection is fully inside one existing block — just add the class to it
-    const selText = range.toString();
-    const blockText = block.textContent;
-    if (selText.trim() === blockText.trim()) {
-      // Entire block is selected: merge class onto the existing element
-      block.classList.add(className);
-      syncOutput(); saveSelection();
-      statusEl.textContent = `Added class "${className}" to existing element`;
-      return;
-    }
+  const isWholeBlock =
+    block &&
+    block !== richEditor &&
+    blockTags.has(block.tagName) &&
+    range.toString().trim() === block.textContent.trim();
+
+  if (isWholeBlock) {
+    // Entire block selected — just stamp the class onto it
+    block.classList.add(className);
+    syncOutput(); saveSelection();
+    statusEl.textContent = `Added class "${className}" to existing element`;
+    return;
   }
 
-  // Fallback: wrap selection in a new <p> with the class
+  // Partial selection — wrap in a <span> (inline, so it goes exactly where the text is)
   const extracted = range.extractContents();
-  const p = document.createElement('p');
-  p.className = className;
-  p.appendChild(extracted);
-  range.insertNode(p);
+  const span = document.createElement('span');
+  span.className = className;
+  span.appendChild(extracted);
+  range.insertNode(span);
+
+  // Re-select the wrapped content so the user can see what was applied
+  const newRange = document.createRange();
+  newRange.selectNodeContents(span);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+  savedRange = newRange.cloneRange();
+
   syncOutput(); saveSelection();
   statusEl.textContent = `Applied class "${className}"`;
 }
