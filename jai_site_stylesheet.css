@@ -170,6 +170,16 @@
     font-weight: 600;
     min-width: 40px
 }
+._popoverHeader_wpa9q_131 {
+    padding: .85rem 1.2rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .3);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .05) 0%, rgba(255, 255, 255, .02) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .08), 0 2px 4px rgba(0, 0, 0, .1);
+    position: relative;
+}
 ._viewAllStandalone_mi467_68 {
     align-items: center;
     background: rgba(174, 153, 255, .2);
@@ -908,6 +918,39 @@
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .5)
 }
+
+
+
+.css-bel0jq {
+    display: inline-flex;
+    max-width: 100%;
+    font-weight: var(--chakra-fontWeights-medium);
+    line-height: 1.2;
+    outline: transparent solid 2px;
+    outline-offset: 2px;
+    --tag-color: var(--badge-color);
+    --tag-bg: var(--badge-bg);
+    --tag-shadow: var(--badge-shadow);
+    background: var(--tag-bg);
+    box-shadow: var(--tag-shadow);
+    border-radius: var(--chakra-radii-md);
+    min-height: var(--tag-min-height);
+    min-width: var(--tag-min-width);
+    font-size: var(--tag-font-size);
+    padding-inline-start: var(--tag-padding-inline);
+    padding-inline-end: var(--tag-padding-inline);
+    --tag-min-height: var(--chakra-sizes-6);
+    --tag-min-width: var(--chakra-sizes-6);
+    --tag-font-size: var(--chakra-fontSizes-sm);
+    --tag-padding-inline: var(--chakra-space-2);
+    color: var(--text-accent-second-light);
+    transition: 0.2s ease-in-out;
+    border: 1px solid var(--colour-white-a30);
+    -webkit-box-align: center;
+    align-items: center;
+    vertical-align: middle;
+}
+
 
 
 
@@ -2430,10 +2473,12 @@
 
 
 
-
-
-
-
+._iosStatusLine_1s17f_223 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .25rem;
+}
 ._iosSettingItem_1s17f_46._compact_1s17f_55 {
     padding: .75rem 1rem;
     min-height: 56px
