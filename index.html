@@ -278,6 +278,47 @@ img {
       border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Disclaimer button ── */
+    #disclaimer-btn {
+      font-size: 12px; padding: 3px 9px;
+      border: 1px solid #3a3420; border-radius: 6px;
+      background: #1c1609; color: #b0b7bf;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s, color .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    #disclaimer-btn:hover { background: #2a1f0b; color: #75845c; border-color: #75845c; }
+
+    /* ── Disclaimer modal ── */
+    #disclaimer-modal {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,.75); align-items: center; justify-content: center;
+    }
+    #disclaimer-modal-box {
+      background: #17130a; border: 1px solid #3a3420; border-radius: 10px;
+      padding: 24px 26px; width: 440px; max-width: 95vw; max-height: 80vh;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    #disclaimer-modal-box h2 {
+      font-size: 14px; font-weight: 700; color: #75845c;
+      letter-spacing: .04em; text-transform: uppercase; font-family: monospace;
+      flex-shrink: 0;
+    }
+    #disclaimer-body {
+      font-size: 12.5px; line-height: 1.75; color: #d8d3b3;
+      overflow-y: auto; flex: 1;
+      scrollbar-width: thin; scrollbar-color: #3a3420 transparent;
+    }
+    #disclaimer-body::-webkit-scrollbar { width: 4px; }
+    #disclaimer-body::-webkit-scrollbar-thumb { background: #3a3420; border-radius: 4px; }
+    #disclaimer-close-btn {
+      align-self: flex-end; padding: 6px 18px; font-size: 12px;
+      border: 1px solid #3a3420; border-radius: 6px;
+      background: #1c1609; color: #b0b7bf; cursor: pointer; transition: all .15s;
+      flex-shrink: 0;
+    }
+    #disclaimer-close-btn:hover { background: #2a1f0b; color: #75845c; border-color: #75845c; }
 		#topbar a, footer a{
     color: #6df2e1;
     text-decoration: 1px underline;
@@ -337,7 +378,10 @@ footer {
       </svg>
     </a>
   <h1>JAI Bio Builder</h1>
-  <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
+  <span style="display:flex;align-items:center;gap:10px;">
+    <span>Like this tool? Consider tipping me on <a href="https://ko-fi.com/permanent">Ko-Fi</a></span>
+    <button id="disclaimer-btn" title="Disclaimer / Info">ⓘ Disclaimer</button>
+  </span>
 </div>
 
 <div id="toolbar">
@@ -461,6 +505,26 @@ footer {
       <button id="link-modal-cancel" style="padding:6px 16px;font-size:12px;border:1px solid #3a3420;border-radius:6px;background:#1c1609;color:#b0b7bf;cursor:pointer;">Cancel</button>
       <button id="link-modal-insert" style="padding:6px 16px;font-size:12px;border:1px solid #623214;border-radius:6px;background:#623214;color:#d8d3b3;cursor:pointer;font-weight:600;">Insert</button>
     </div>
+  </div>
+</div>
+
+<!-- Disclaimer Modal -->
+<div id="disclaimer-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
+  <div id="disclaimer-modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <h2>⚠ Disclaimer</h2>
+      <button id="disclaimer-modal-x" style="background:none;border:none;color:#b0b7bf;font-size:20px;cursor:pointer;line-height:1;padding:0 2px;" title="Close">×</button>
+    </div>
+    <div id="disclaimer-body">
+      <p>This tool is provided as-is and is not officially affiliated with JanitorAI.</p>
+      <br>
+      <p>Please use at your own discretion. Some classes may only appear on certain devices or on client-side only. Other classes may need to be loaded into the page assets first before loading on the bot page (e.g. 'mychats' button requires you to visit the home page and then the bot page in order to load properly). I cannot guarantee all classes will work. This tool is simply to experiment with the designing of your bot bio.</p>
+      <br>
+      <p>I do not collect any personal data from this website. No data is stored or sent.</p>
+      <br>
+      <p>If you encounter bugs or unexpected issues, please open an issue on the GitHub repository.</p>
+    </div>
+    <button id="disclaimer-close-btn">Close</button>
   </div>
 </div>
 
@@ -1358,6 +1422,17 @@ document.getElementById('link-modal-insert').addEventListener('click', () => {
   closeLinkModal();
   syncOutput();
 });
+/* ────────────────────────────────────────────
+   DISCLAIMER MODAL
+──────────────────────────────────────────── */
+const disclaimerModal = document.getElementById('disclaimer-modal');
+function openDisclaimer()  { disclaimerModal.style.display = 'flex'; }
+function closeDisclaimer() { disclaimerModal.style.display = 'none'; }
+
+document.getElementById('disclaimer-btn').addEventListener('click', openDisclaimer);
+document.getElementById('disclaimer-modal-x').addEventListener('click', closeDisclaimer);
+document.getElementById('disclaimer-close-btn').addEventListener('click', closeDisclaimer);
+disclaimerModal.addEventListener('click', e => { if (e.target === disclaimerModal) closeDisclaimer(); });
 </script>
 </body>
 </html>
