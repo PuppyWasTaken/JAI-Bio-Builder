@@ -463,7 +463,7 @@ footer {
       </span>
       <button id="refresh-btn">↺ Reload</button>
     </div>
-    <input id="class-search" type="text" placeholder="Search classes...">
+    <input id="class-search" type="text" placeholder="Search classes or properties...">
     <div id="class-list"></div>
   </div>
 </div>
@@ -1220,7 +1220,9 @@ document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
 
 classSearch.addEventListener('input', () => {
   const q = classSearch.value.toLowerCase();
-  renderClassList(q ? allClasses.filter(c => c.name.toLowerCase().includes(q)) : allClasses);
+  renderClassList(q ? allClasses.filter(c =>
+    c.name.toLowerCase().includes(q) || c.css.toLowerCase().includes(q)
+  ) : allClasses);
 });
 
 function parseCSSClasses(cssText) {
