@@ -1097,6 +1097,19 @@ function applyClass(className) {
   const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE']);
   let container = range.commonAncestorContainer;
   if (container.nodeType === Node.TEXT_NODE) container = container.parentElement;
+
+  // Check if the selection is inside (or is) an <a> tag — if so, apply class directly to it
+  let anchor = container;
+  while (anchor && anchor !== richEditor) {
+    if (anchor.tagName === 'A') {
+      anchor.classList.add(className);
+      syncOutput(); saveSelection();
+      statusEl.textContent = `Applied class "${className}" to link`;
+      return;
+    }
+    anchor = anchor.parentElement;
+  }
+
   let block = container;
   while (block && block !== richEditor && !blockTags.has(block.tagName)) {
     block = block.parentElement;
