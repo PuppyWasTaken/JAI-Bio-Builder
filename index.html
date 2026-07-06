@@ -1179,30 +1179,37 @@ function applyClass(className) {
     block = block.parentElement;
   }
 
+  // Sanitizer only allows a class attribute on <p> and <a>, so only stamp the
+  // class directly onto the block when that block is a <p>. Any other whole
+  // block (div/h1-h6/li/blockquote) falls through to the wrap-in-<a> logic below.
   const isWholeBlock =
     block &&
     block !== richEditor &&
-    blockTags.has(block.tagName) &&
+    block.tagName === 'P' &&
     range.toString().trim() === block.textContent.trim();
 
   if (isWholeBlock) {
-    // Entire block selected — just stamp the class onto it
+    // Entire <p> selected — just stamp the class onto it
     block.classList.add(className);
     syncOutput(); saveSelection();
     statusEl.textContent = `Added class "${className}" to existing element`;
     return;
   }
 
-  // Partial selection — wrap in a <span> (inline, so it goes exactly where the text is)
+  // Partial selection (or a whole non-<p> block) — sanitizer strips class from
+  // <span>, so wrap in a class-carrying <a> instead. The sanitizer requires an
+  // href to keep the tag, so we give it "#" (an inert same-page anchor) rather
+  // than a real destination.
   const extracted = range.extractContents();
-  const span = document.createElement('span');
-  span.className = className;
-  span.appendChild(extracted);
-  range.insertNode(span);
+  const wrapper = document.createElement('a');
+  wrapper.className = className;
+  wrapper.href = '#';
+  wrapper.appendChild(extracted);
+  range.insertNode(wrapper);
 
   // Re-select the wrapped content so the user can see what was applied
   const newRange = document.createRange();
-  newRange.selectNodeContents(span);
+  newRange.selectNodeContents(wrapper);
   sel.removeAllRanges();
   sel.addRange(newRange);
   savedRange = newRange.cloneRange();
@@ -1353,7 +1360,9 @@ document.getElementById('image-modal-insert').addEventListener('click', () => {
   const img = document.createElement('img');
   img.src = url;
   img.alt = imageAltIn.value.trim();
-  img.style.maxWidth = '100%';
+  // No inline style here — the target sanitizer strips all inline style on
+  // <img>, and class isn't allowed on <img> either, so sizing has to come
+  // from the destination page's own CSS rather than an attribute we emit.
   const sel2 = window.getSelection();
   if (sel2 && sel2.rangeCount) {
     const r = sel2.getRangeAt(0);
