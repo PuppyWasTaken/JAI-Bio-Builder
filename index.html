@@ -179,6 +179,25 @@ img {
       flex: 1; border: none; width: 100%;
     }
 
+    #preview-bg-controls { display: flex; align-items: center; gap: 5px; }
+    .bg-swatch {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1px solid #3a3420; cursor: pointer; padding: 0;
+      transition: border-color .15s, transform .1s;
+    }
+    .bg-swatch:hover { transform: scale(1.12); }
+    .bg-swatch.active { border-color: #75845c; box-shadow: 0 0 0 1px #75845c; }
+    #bg-custom-wrap {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1px solid #3a3420; cursor: pointer; overflow: hidden;
+      display: block; position: relative;
+      background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    }
+    #preview-bg-custom {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; border: none; padding: 0;
+    }
+
     /* ── Status bar ── */
     #status {
       font-size: 11px; color: #b0b7bf;
@@ -446,7 +465,21 @@ footer {
     </div>
 
     <div id="preview-pane">
-      <div class="pane-label">Preview</div>
+      <div class="pane-label">
+        Preview
+        <div id="preview-bg-controls">
+          <button class="bg-swatch active" data-bg="rgb(29,12,49)" style="background:rgb(29,12,49)" title="Default (purple)"></button>
+          <button class="bg-swatch" data-bg="#2A292B" style="background:#2A292B" title="Holiday2025"></button>
+          <button class="bg-swatch" data-bg="linear-gradient(to bottom, #1E1D1D, #1F2420)" style="background:linear-gradient(to bottom, #1E1D1D, #1F2420)" title="SpringFever"></button>
+          <button class="bg-swatch" data-bg="linear-gradient(45deg, #516763, #776155)" style="background:linear-gradient(45deg, #516763, #776155)" title="PassportToPages"></button>
+          <button class="bg-swatch" data-bg="#2B0F1A" style="background:#2B0F1A" title="TheValentine"></button>
+          <button class="bg-swatch" data-bg="#1D0C0C" style="background:#1D0C0C" title="Christmas"></button>
+          <button class="bg-swatch" data-bg="#062506" style="background:#062506" title="2025"></button>
+          <label id="bg-custom-wrap" title="Custom color">
+            <input type="color" id="preview-bg-custom" value="#1d0c31">
+          </label>
+        </div>
+      </div>
       <iframe id="preview-frame" title="Live preview"></iframe>
     </div>
 
@@ -555,6 +588,7 @@ let savedRange = null;
 let colorMode  = 'text';
 let allClasses = [];
 let rawCSS     = '';
+let previewBg  = 'rgb(29,12,49)';
 
 colorSwatch.style.background = colorInput.value;
 
@@ -781,10 +815,27 @@ function updatePreview() {
   _previewTimer = setTimeout(() => {
     previewFrame.srcdoc = buildDoc(
       richEditor.innerHTML,
-      'font-family:system-ui,sans-serif;padding:20px;line-height:1.75;font-size:15px;background:rgb(29,12,49);color:#ffffff;'
+      `font-family:system-ui,sans-serif;padding:20px;line-height:1.75;font-size:15px;background:${previewBg};color:#ffffff;`
     );
   }, 300);
 }
+
+/* ── Preview background presets ── */
+const bgSwatches   = document.querySelectorAll('.bg-swatch');
+const bgCustomIn   = document.getElementById('preview-bg-custom');
+
+function setPreviewBg(color, activeBtn) {
+  previewBg = color;
+  bgSwatches.forEach(b => b.classList.remove('active'));
+  if (activeBtn) activeBtn.classList.add('active');
+  updatePreview();
+}
+
+bgSwatches.forEach(btn => {
+  btn.addEventListener('click', () => setPreviewBg(btn.dataset.bg, btn));
+});
+
+bgCustomIn.addEventListener('input', () => setPreviewBg(bgCustomIn.value, null));
 
 /* ────────────────────────────────────────────
    HTML OUTPUT
@@ -823,7 +874,7 @@ let _htmlEditTimer = null;
 sourceEditor.addEventListener('input', () => {
   clearTimeout(_htmlEditTimer);
   _htmlEditTimer = setTimeout(() => {
-    // Only sync back if the textarea is actually focused (user is editing it)
+
     if (document.activeElement !== sourceEditor) return;
     pushUndo();
     richEditor.innerHTML = sourceEditor.value;
@@ -832,12 +883,12 @@ sourceEditor.addEventListener('input', () => {
   }, 400);
 });
 
-/* When the textarea loses focus, do a final sync to clean up formatting */
+
 sourceEditor.addEventListener('blur', () => {
   clearTimeout(_htmlEditTimer);
   if (sourceEditor.dataset.userEdited === '1') {
     richEditor.innerHTML = sourceEditor.value;
-    // Reformat the HTML neatly
+
     sourceEditor.value = formatHTML(richEditor.innerHTML);
     updatePreview();
     sourceEditor.dataset.userEdited = '';
@@ -902,7 +953,6 @@ function applyFontSizeFromInput() {
   pushUndo();
   const range = sel.getRangeAt(0);
 
-  // If cursor is inside an existing managed span, just update it
   let node = range.startContainer;
   while (node && node !== richEditor) {
     if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
@@ -937,10 +987,10 @@ fontSizeDisp.addEventListener('keydown', e => {
   if (e.key === 'Escape') { updateFontSizeDisplay(); richEditor.focus(); }
 });
 
-/* Select-all on focus so the user can just type the new value immediately */
+
 fontSizeDisp.addEventListener('focus', () => { fontSizeDisp.select(); });
 
-/* Clicking the input must not lose the editor selection — save it first */
+
 fontSizeDisp.addEventListener('mousedown', () => {
   const sel = window.getSelection();
   if (sel && sel.rangeCount && richEditor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
@@ -948,7 +998,6 @@ fontSizeDisp.addEventListener('mousedown', () => {
   }
 });
 
-/* Use selectionchange so ANY selection method (click, drag, keyboard, touch) is captured */
 document.addEventListener('selectionchange', () => {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
@@ -975,7 +1024,6 @@ function adjustFontSize(delta) {
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select some text first'; return; }
   const range = sel.getRangeAt(0);
 
-  // Walk up — if already in a managed span, just nudge it
   let node = range.startContainer;
   while (node && node !== richEditor) {
     if (node.nodeType === 1 && node.tagName === 'SPAN' && node.dataset.fsManaged) {
@@ -1157,12 +1205,11 @@ function applyClass(className) {
   if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
   const range = sel.getRangeAt(0);
 
-  // Walk up from the common ancestor to find the nearest block element inside the editor
   const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE']);
   let container = range.commonAncestorContainer;
   if (container.nodeType === Node.TEXT_NODE) container = container.parentElement;
 
-  // Check if the selection is inside (or is) an <a> tag — if so, apply class directly to it
+
   let anchor = container;
   while (anchor && anchor !== richEditor) {
     if (anchor.tagName === 'A') {
@@ -1179,9 +1226,6 @@ function applyClass(className) {
     block = block.parentElement;
   }
 
-  // Sanitizer only allows a class attribute on <p> and <a>, so only stamp the
-  // class directly onto the block when that block is a <p>. Any other whole
-  // block (div/h1-h6/li/blockquote) falls through to the wrap-in-<a> logic below.
   const isWholeBlock =
     block &&
     block !== richEditor &&
@@ -1196,10 +1240,6 @@ function applyClass(className) {
     return;
   }
 
-  // Partial selection (or a whole non-<p> block) — sanitizer strips class from
-  // <span>, so wrap in a class-carrying <a> instead. The sanitizer requires an
-  // href to keep the tag, so we give it "#" (an inert same-page anchor) rather
-  // than a real destination.
   const extracted = range.extractContents();
   const wrapper = document.createElement('a');
   wrapper.className = className;
@@ -1207,7 +1247,7 @@ function applyClass(className) {
   wrapper.appendChild(extracted);
   range.insertNode(wrapper);
 
-  // Re-select the wrapped content so the user can see what was applied
+
   const newRange = document.createRange();
   newRange.selectNodeContents(wrapper);
   sel.removeAllRanges();
@@ -1243,12 +1283,32 @@ function parseCSSClasses(cssText) {
   return results;
 }
 
+
+let classObserver = null;
+
 function renderClassList(classes) {
+  if (classObserver) classObserver.disconnect();
   classListEl.innerHTML = '';
   if (!classes.length) {
     classListEl.innerHTML = '<div style="padding:14px 6px;font-size:12px;color:#7a7a6a">No classes found.</div>';
     return;
   }
+
+  classObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const iframe = entry.target;
+      if (!iframe.dataset.loaded) {
+        const clsName = iframe.dataset.clsName;
+        iframe.srcdoc = buildDoc(
+          `<p class="${clsName}" style="margin:0">Preview — .${clsName}</p>`,
+          'font-family:system-ui,sans-serif;font-size:12px;padding:8px 10px;background:rgb(29,12,49);color:#ffffff;'
+        );
+        iframe.dataset.loaded = '1';
+      }
+      classObserver.unobserve(iframe);
+    });
+  }, { root: classListEl, rootMargin: '600px 0px', threshold: 0.01 });
 
   const frag = document.createDocumentFragment();
   classes.forEach(cls => {
@@ -1271,13 +1331,9 @@ function renderClassList(classes) {
     header.appendChild(nameEl);
     header.appendChild(btn);
 
-    // Preview iframe — rawCSS injected inline via srcdoc so class styles render correctly
     const iframe = document.createElement('iframe');
     iframe.className = 'class-preview-iframe';
-    iframe.srcdoc = buildDoc(
-      `<p class="${cls.name}" style="margin:0">Preview — .${cls.name}</p>`,
-      'font-family:system-ui,sans-serif;font-size:12px;padding:8px 10px;background:rgb(29,12,49);color:#ffffff;'
-    );
+    iframe.dataset.clsName = cls.name;
     iframe.addEventListener('load', () => {
       try {
         const h = iframe.contentDocument.body.scrollHeight;
@@ -1293,6 +1349,7 @@ function renderClassList(classes) {
     item.appendChild(iframe);
     item.appendChild(snippet);
     frag.appendChild(item);
+    classObserver.observe(iframe);
   });
 
   classListEl.appendChild(frag);
@@ -1313,7 +1370,6 @@ async function loadCSS() {
     panelStatus.innerHTML = count
       ? `<span style="color:#75845c">${count} classes loaded</span>`
       : '<span style="color:#b0b7bf">No classes found yet</span>';
-    // renderClassList AFTER rawCSS is populated so buildDoc has the stylesheet
     renderClassList(allClasses);
     updatePreview();
   } catch (e) {
@@ -1325,15 +1381,13 @@ async function loadCSS() {
 loadCSS();
 syncOutput();
 
-/* ────────────────────────────────────────────
-   IMAGE INSERT MODAL
-──────────────────────────────────────────── */
+
 const imageModal  = document.getElementById('image-modal');
 const imageUrlIn  = document.getElementById('image-url-input');
 const imageAltIn  = document.getElementById('image-alt-input');
 
 function openImageModal() {
-  // capture current selection text for alt prefill
+
   const sel = window.getSelection();
   if (sel && sel.rangeCount && !sel.isCollapsed) {
     imageAltIn.value = sel.toString();
@@ -1360,9 +1414,7 @@ document.getElementById('image-modal-insert').addEventListener('click', () => {
   const img = document.createElement('img');
   img.src = url;
   img.alt = imageAltIn.value.trim();
-  // No inline style here — the target sanitizer strips all inline style on
-  // <img>, and class isn't allowed on <img> either, so sizing has to come
-  // from the destination page's own CSS rather than an attribute we emit.
+
   const sel2 = window.getSelection();
   if (sel2 && sel2.rangeCount) {
     const r = sel2.getRangeAt(0);
@@ -1433,9 +1485,7 @@ document.getElementById('link-modal-insert').addEventListener('click', () => {
   closeLinkModal();
   syncOutput();
 });
-/* ────────────────────────────────────────────
-   DISCLAIMER MODAL
-──────────────────────────────────────────── */
+
 const disclaimerModal = document.getElementById('disclaimer-modal');
 function openDisclaimer()  { disclaimerModal.style.display = 'flex'; }
 function closeDisclaimer() { disclaimerModal.style.display = 'none'; }
