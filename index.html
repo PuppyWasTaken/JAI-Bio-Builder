@@ -252,6 +252,27 @@ img {
     #class-list::-webkit-scrollbar { width: 4px; }
     #class-list::-webkit-scrollbar-thumb { background: #3a3420; border-radius: 4px; }
 
+    /* ── Pagination controls ── */
+    #class-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px; padding: 6px 10px;
+      border-top: 1px solid #2e2a1a; background: #161208;
+      flex-shrink: 0; font-size: 11px; color: #b0b7bf;
+    }
+    #class-pagination .page-nav-btns { display: flex; align-items: center; gap: 4px; }
+    .page-btn {
+      font-size: 11px; padding: 3px 10px;
+      border: 1px solid #3a3420; border-radius: 5px;
+      background: #1c1609; color: #d8d3b3; cursor: pointer; transition: all .15s;
+    }
+    .page-btn:hover:not(:disabled) { background: #2a1f0b; border-color: #75845c; }
+    .page-btn:disabled { opacity: .4; cursor: default; }
+    #page-size-select {
+      font-size: 11px; padding: 3px 6px;
+      border: 1px solid #3a3420; border-radius: 5px;
+      background: #1c1609; color: #d8d3b3; cursor: pointer;
+    }
+
     .class-item {
       margin-bottom: 8px; border: 1px solid #2e2a1a;
       border-radius: 7px; overflow: hidden; transition: border-color .15s;
@@ -498,6 +519,18 @@ footer {
     </div>
     <input id="class-search" type="text" placeholder="Search classes or properties...">
     <div id="class-list"></div>
+    <div id="class-pagination">
+      <span id="page-info">Page 1</span>
+      <div class="page-nav-btns">
+        <button id="page-prev" class="page-btn">‹ Prev</button>
+        <button id="page-next" class="page-btn">Next ›</button>
+      </div>
+      <select id="page-size-select" title="Classes per page">
+        <option value="20">20 / page</option>
+        <option value="50" selected>50 / page</option>
+        <option value="100">100 / page</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -583,6 +616,15 @@ const classSearch  = document.getElementById('class-search');
 const classListEl  = document.getElementById('class-list');
 const panelStatus  = document.getElementById('panel-status-text');
 const classPanel   = document.getElementById('class-panel');
+
+/* ── Pagination state ── */
+const pageInfoEl     = document.getElementById('page-info');
+const pagePrevBtn    = document.getElementById('page-prev');
+const pageNextBtn    = document.getElementById('page-next');
+const pageSizeSelect = document.getElementById('page-size-select');
+let pageSize        = parseInt(pageSizeSelect.value, 10); // classes rendered (iframes created) per page
+let currentPage      = 1;
+let filteredClasses  = []; // whatever the search currently matches; paginate over this
 
 let savedRange = null;
 let colorMode  = 'text';
@@ -1267,10 +1309,48 @@ document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
 
 classSearch.addEventListener('input', () => {
   const q = classSearch.value.toLowerCase();
-  renderClassList(q ? allClasses.filter(c =>
+  filteredClasses = q ? allClasses.filter(c =>
     c.name.toLowerCase().includes(q) || c.css.toLowerCase().includes(q)
-  ) : allClasses);
+  ) : allClasses;
+  currentPage = 1;
+  renderPage();
 });
+
+pageSizeSelect.addEventListener('change', () => {
+  pageSize = parseInt(pageSizeSelect.value, 10);
+  currentPage = 1;
+  renderPage();
+});
+
+pagePrevBtn.addEventListener('click', () => {
+  if (currentPage > 1) { currentPage--; renderPage(); classListEl.scrollTop = 0; }
+});
+
+pageNextBtn.addEventListener('click', () => {
+  const totalPages = Math.max(1, Math.ceil(filteredClasses.length / pageSize));
+  if (currentPage < totalPages) { currentPage++; renderPage(); classListEl.scrollTop = 0; }
+});
+
+/* Renders only the slice of filteredClasses belonging to currentPage.
+   This is the key fix: only pageSize classes (default 50) ever get
+   built into the DOM / get an <iframe> at once, instead of all 700+. */
+function renderPage() {
+  const totalItems  = filteredClasses.length;
+  const totalPages  = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * pageSize;
+  const end   = Math.min(start + pageSize, totalItems);
+  const slice = filteredClasses.slice(start, end);
+
+  renderClassList(slice);
+
+  pageInfoEl.textContent = totalItems
+    ? `${start + 1}–${end} of ${totalItems}`
+    : 'No classes';
+  pagePrevBtn.disabled = currentPage <= 1;
+  pageNextBtn.disabled = currentPage >= totalPages;
+}
 
 function parseCSSClasses(cssText) {
   const results = [], seen = new Set();
@@ -1366,11 +1446,13 @@ async function loadCSS() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     rawCSS     = await res.text();
     allClasses = parseCSSClasses(rawCSS);
+    filteredClasses = allClasses;
+    currentPage = 1;
     const count = allClasses.length;
     panelStatus.innerHTML = count
       ? `<span style="color:#75845c">${count} classes loaded</span>`
       : '<span style="color:#b0b7bf">No classes found yet</span>';
-    renderClassList(allClasses);
+    renderPage();
     updatePreview();
   } catch (e) {
     panelStatus.innerHTML = `<span style="color:#f87171">Load failed: ${e.message}</span>`;
