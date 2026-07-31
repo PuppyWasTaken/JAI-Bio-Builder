@@ -19,7 +19,6 @@
 img {
     max-width: 100%;
 }
-    /* ── Top bar ── */
     #topbar {
       display: flex;
       align-items: center;
@@ -32,7 +31,6 @@ img {
     #topbar h1 { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: #75845c; text-transform:uppercase;font-family:monospace; text-align: center;}
     #topbar span { font-size: 11px; color: #b0b7bf; }
 
-    /* ── Toolbar ── */
     #toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -93,7 +91,6 @@ img {
     }
     #panel-toggle:hover { background: #2a1f0b; }
 
-    /* ── Main layout ── */
     #main { display: flex; flex: 1; overflow: hidden; }
     #editor-section {
     display: grid;
@@ -107,7 +104,6 @@ img {
     overflow: hidden;
 }
 
-    /* ── Rich editor pane ── */
     #editor-pane {
       display: flex; flex-direction: column;
       flex: 1; overflow: hidden;
@@ -133,7 +129,6 @@ img {
     #rich-editor::-webkit-scrollbar { width: 4px; }
     #rich-editor::-webkit-scrollbar-thumb { background: #3a3420; border-radius: 4px; }
 
-    /* ── HTML output pane ── */
 	#html-pane {
 	    display: flex;
 	    flex-direction: column;
@@ -164,7 +159,6 @@ img {
     }
     #copy-html-btn:hover { background: #2a1f0b; color: #75845c; }
 
-    /* ── Preview pane ── */
 	#preview-pane {
 	    display: flex;
 	    flex-direction: column;
@@ -198,14 +192,12 @@ img {
       opacity: 0; cursor: pointer; border: none; padding: 0;
     }
 
-    /* ── Status bar ── */
     #status {
       font-size: 11px; color: #b0b7bf;
       padding: 4px 16px; border-top: 1px solid #2e2a1a;
       background: #161208; flex-shrink: 0;
     }
 
-    /* ── Class panel ── */
     #class-panel {
       width: 0; overflow: hidden;
       border-left: 1px solid #2e2a1a;
@@ -252,7 +244,6 @@ img {
     #class-list::-webkit-scrollbar { width: 4px; }
     #class-list::-webkit-scrollbar-thumb { background: #3a3420; border-radius: 4px; }
 
-    /* ── Pagination controls ── */
     #class-pagination {
       display: flex; align-items: center; justify-content: space-between;
       gap: 6px; padding: 6px 10px;
@@ -319,7 +310,6 @@ img {
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Disclaimer button ── */
     #disclaimer-btn {
       font-size: 12px; padding: 3px 9px;
       border: 1px solid #3a3420; border-radius: 6px;
@@ -330,7 +320,6 @@ img {
     }
     #disclaimer-btn:hover { background: #2a1f0b; color: #75845c; border-color: #75845c; }
 
-    /* ── Disclaimer modal ── */
     #disclaimer-modal {
       display: none; position: fixed; inset: 0; z-index: 1000;
       background: rgba(0,0,0,.75); align-items: center; justify-content: center;
@@ -450,6 +439,7 @@ footer {
   <div class="tb-group">
     <button class="tb-btn" id="undo-btn" title="Undo (Ctrl+Z)">↩ Undo</button>
     <button class="tb-btn" id="redo-btn" title="Redo (Ctrl+Y)">↪ Redo</button>
+    <button class="tb-btn" id="clear-draft-btn" title="Clear saved draft">🗑 Clear Draft</button>
   </div>
   <div class="tb-group">
     <button class="tb-btn" id="bold-btn" style="font-weight:700" title="Bold (Ctrl+B)">B</button>
@@ -475,6 +465,7 @@ footer {
         <p>Start typing your bio here. <strong>Select any text</strong> to apply formatting, colors, font sizes, alignment, or CSS classes using the toolbar above.</p>
       </div>
       <div id="status">Select text to apply formatting</div>
+      <div id="autosave-indicator" style="font-size:11px;color:#6a6a5a;padding:4px 16px;flex-shrink:0;"></div>
     </div>
 
     <div id="html-pane">
@@ -534,7 +525,6 @@ footer {
   </div>
 </div>
 
-<!-- Image Insert Modal -->
 <div id="image-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
   <div style="background:#17130a;border:1px solid #3a3420;border-radius:10px;padding:22px 24px;width:360px;max-width:95vw;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -554,7 +544,6 @@ footer {
   </div>
 </div>
 
-<!-- Link Insert Modal -->
 <div id="link-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
   <div style="background:#17130a;border:1px solid #3a3420;border-radius:10px;padding:22px 24px;width:360px;max-width:95vw;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -574,7 +563,6 @@ footer {
   </div>
 </div>
 
-<!-- Disclaimer Modal -->
 <div id="disclaimer-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
   <div id="disclaimer-modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
@@ -586,11 +574,27 @@ footer {
       <br>
       <p>Please use at your own discretion. Some classes may only appear on certain devices or on client-side only. Other classes may need to be loaded into the page assets first before loading on the bot page (e.g. 'mychats' button requires you to visit the home page and then the bot page in order to load properly). I cannot guarantee all classes will work. This tool is simply to experiment with the designing of your bot bio.</p>
       <br>
-      <p>I do not collect any personal data from this website. No data is stored or sent.</p>
+      <p>I do not collect any personal data from this website. No data is sent. Your bio draft is autosaved locally in your own browser, you can clear it with the "Clear Draft" button.</p>
       <br>
       <p>If you encounter bugs or unexpected issues, please open an issue on the GitHub repository.</p>
     </div>
     <button id="disclaimer-close-btn">Close</button>
+  </div>
+</div>
+
+<div id="restore-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
+  <div style="background:#17130a;border:1px solid #3a3420;border-radius:10px;padding:24px 26px;width:400px;max-width:95vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <span style="font-size:13px;font-weight:600;color:#75845c;">Restore previous draft?</span>
+      <button id="restore-modal-x" style="background:none;border:none;color:#b0b7bf;font-size:20px;cursor:pointer;line-height:1;padding:0 2px;" title="Discard">×</button>
+    </div>
+    <p id="restore-modal-info" style="font-size:12.5px;line-height:1.6;color:#d8d3b3;margin-bottom:18px;">
+      We found an unsaved bio from your last session. Would you like to restore it or start fresh?
+    </p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="restore-discard-btn" style="padding:6px 16px;font-size:12px;border:1px solid #3a3420;border-radius:6px;background:#1c1609;color:#b0b7bf;cursor:pointer;">Discard</button>
+      <button id="restore-confirm-btn" style="padding:6px 16px;font-size:12px;border:1px solid #623214;border-radius:6px;background:#623214;color:#d8d3b3;cursor:pointer;font-weight:600;">Restore</button>
+    </div>
   </div>
 </div>
 
@@ -617,7 +621,6 @@ const classListEl  = document.getElementById('class-list');
 const panelStatus  = document.getElementById('panel-status-text');
 const classPanel   = document.getElementById('class-panel');
 
-/* ── Pagination state ── */
 const pageInfoEl     = document.getElementById('page-info');
 const pagePrevBtn    = document.getElementById('page-prev');
 const pageNextBtn    = document.getElementById('page-next');
@@ -634,12 +637,6 @@ let previewBg  = 'rgb(29,12,49)';
 
 colorSwatch.style.background = colorInput.value;
 
-/* ────────────────────────────────────────────
-   CORE: build a full srcdoc string with rawCSS
-   injected inline as a <style> block.
-   This avoids all CORS / external-fetch issues
-   inside sandboxed iframes.
-──────────────────────────────────────────── */
 const ROOT_VARS = `:root {
     --colour-black: #000000;
     --colour-black-a05: rgba(0,0,0,.05);
@@ -837,7 +834,7 @@ const ROOT_VARS = `:root {
 }`;
 
 function buildDoc(bodyHTML, bodyCSS) {
-  // @import rules MUST be first in a <style> block — extract them from rawCSS
+
   const importLines = [];
   const cleanCSS = rawCSS.replace(/@import\s*[^;]+;/g, match => {
     importLines.push(match.trim());
@@ -847,10 +844,8 @@ function buildDoc(bodyHTML, bodyCSS) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${fullCSS}</style><style>body{${bodyCSS || ''}}img{max-width:100%;}</style></head><body>${bodyHTML}</body></html>`;
 }
 
-/* ────────────────────────────────────────────
-   PREVIEW
-──────────────────────────────────────────── */
-/* Debounced preview — only rewrite srcdoc after user stops typing for 300ms */
+
+
 let _previewTimer = null;
 function updatePreview() {
   clearTimeout(_previewTimer);
@@ -862,7 +857,6 @@ function updatePreview() {
   }, 300);
 }
 
-/* ── Preview background presets ── */
 const bgSwatches   = document.querySelectorAll('.bg-swatch');
 const bgCustomIn   = document.getElementById('preview-bg-custom');
 
@@ -871,6 +865,7 @@ function setPreviewBg(color, activeBtn) {
   bgSwatches.forEach(b => b.classList.remove('active'));
   if (activeBtn) activeBtn.classList.add('active');
   updatePreview();
+  saveDraft();
 }
 
 bgSwatches.forEach(btn => {
@@ -879,9 +874,7 @@ bgSwatches.forEach(btn => {
 
 bgCustomIn.addEventListener('input', () => setPreviewBg(bgCustomIn.value, null));
 
-/* ────────────────────────────────────────────
-   HTML OUTPUT
-──────────────────────────────────────────── */
+
 function formatHTML(html) {
   const voids = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
   let result = '', indent = 0;
@@ -909,9 +902,7 @@ function syncOutput() {
 
 richEditor.addEventListener('input', syncOutput);
 
-/* ────────────────────────────────────────────
-   REVERSE SYNC: HTML textarea → rich editor + preview
-──────────────────────────────────────────── */
+
 let _htmlEditTimer = null;
 sourceEditor.addEventListener('input', () => {
   clearTimeout(_htmlEditTimer);
@@ -921,6 +912,7 @@ sourceEditor.addEventListener('input', () => {
     pushUndo();
     richEditor.innerHTML = sourceEditor.value;
     updatePreview();
+    saveDraft();
     statusEl.textContent = 'HTML applied to editor';
   }, 400);
 });
@@ -933,6 +925,7 @@ sourceEditor.addEventListener('blur', () => {
 
     sourceEditor.value = formatHTML(richEditor.innerHTML);
     updatePreview();
+    saveDraft();
     sourceEditor.dataset.userEdited = '';
   }
 });
@@ -949,9 +942,116 @@ document.getElementById('copy-html-btn').addEventListener('click', () => {
   });
 });
 
-/* ────────────────────────────────────────────
-   SELECTION
-──────────────────────────────────────────── */
+
+const AUTOSAVE_KEY   = 'jai-bio-builder-draft';
+const AUTOSAVE_DELAY = 600; 
+
+const autosaveIndicator = document.getElementById('autosave-indicator');
+const restoreModal      = document.getElementById('restore-modal');
+
+let _autosaveTimer = null;
+let lastSavedAt     = null;
+let pendingDraft     = null; 
+
+function saveDraft() {
+  clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(() => {
+    try {
+      const draft = {
+        html: richEditor.innerHTML,
+        previewBg: previewBg,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(draft));
+      lastSavedAt = draft.savedAt;
+      updateAutosaveIndicator();
+    } catch (e) {
+      console.warn('Autosave failed:', e);
+      if (autosaveIndicator) autosaveIndicator.textContent = 'Autosave failed';
+    }
+  }, AUTOSAVE_DELAY);
+}
+
+function updateAutosaveIndicator() {
+  if (!autosaveIndicator) return;
+  if (!lastSavedAt) { autosaveIndicator.textContent = ''; return; }
+  const secs = Math.round((Date.now() - lastSavedAt) / 1000);
+  let label;
+  if (secs < 3) label = 'Draft saved';
+  else if (secs < 60) label = `Draft saved ${secs}s ago`;
+  else label = `Draft saved ${Math.round(secs / 60)}m ago`;
+  autosaveIndicator.textContent = label;
+}
+setInterval(updateAutosaveIndicator, 3000);
+
+function applyDraft(draft) {
+  richEditor.innerHTML = draft.html;
+  if (draft.previewBg) {
+    previewBg = draft.previewBg;
+    const match = [...bgSwatches].find(b => b.dataset.bg === draft.previewBg);
+    bgSwatches.forEach(b => b.classList.remove('active'));
+    if (match) match.classList.add('active');
+  }
+  syncOutput();
+  statusEl.textContent = 'Draft restored';
+}
+
+function clearDraft() {
+  localStorage.removeItem(AUTOSAVE_KEY);
+}
+
+function checkForDraft() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft.html || !draft.html.trim()) return; 
+
+    pendingDraft = draft;
+
+    const mins = Math.round((Date.now() - (draft.savedAt || 0)) / 60000);
+    const timeLabel = mins < 1 ? 'moments ago' : mins < 60 ? `${mins} min ago` : 'a while ago';
+    document.getElementById('restore-modal-info').textContent =
+      `We found an unsaved bio from ${timeLabel}. Would you like to restore it or start fresh?`;
+
+    restoreModal.style.display = 'flex';
+  } catch (e) {
+    console.warn('Failed to check for draft:', e);
+  }
+}
+
+function handleDiscard() {
+  clearDraft();
+  restoreModal.style.display = 'none';
+  pendingDraft = null;
+  statusEl.textContent = 'Started with a fresh bio';
+}
+
+document.getElementById('restore-confirm-btn').addEventListener('click', () => {
+  if (pendingDraft) applyDraft(pendingDraft);
+  restoreModal.style.display = 'none';
+  pendingDraft = null;
+});
+document.getElementById('restore-discard-btn').addEventListener('click', handleDiscard);
+document.getElementById('restore-modal-x').addEventListener('click', handleDiscard);
+
+document.getElementById('clear-draft-btn').addEventListener('click', () => {
+  clearDraft();
+  lastSavedAt = null;
+  autosaveIndicator.textContent = 'Draft cleared';
+  statusEl.textContent = 'Cleared saved draft (current editor content untouched)';
+  setTimeout(() => {
+    if (!lastSavedAt) autosaveIndicator.textContent = '';
+  }, 2500);
+});
+
+// Hook autosave into existing edit paths
+richEditor.addEventListener('input', saveDraft);
+
+// Check for a restorable draft once the page has loaded
+window.addEventListener('DOMContentLoaded', checkForDraft);
+
+
 function saveSelection() {
   const sel = window.getSelection();
   if (sel && sel.rangeCount > 0) {
@@ -981,9 +1081,6 @@ function updateFontSizeDisplay() {
 }
 
 
-/* ────────────────────────────────────────────
-   FONT SIZE INPUT — direct entry
-──────────────────────────────────────────── */
 function applyFontSizeFromInput() {
   const raw = fontSizeDisp.value.trim().replace(/px$/i, '');
   const px  = parseInt(raw, 10);
@@ -1054,9 +1151,7 @@ document.addEventListener('selectionchange', () => {
   }
 });
 
-/* ────────────────────────────────────────────
-   FONT SIZE
-──────────────────────────────────────────── */
+
 document.getElementById('font-inc').addEventListener('click', () => { pushUndo(); adjustFontSize(2); });
 document.getElementById('font-dec').addEventListener('click', () => { pushUndo(); adjustFontSize(-2); });
 
@@ -1099,9 +1194,7 @@ function adjustFontSize(delta) {
   syncOutput();
 }
 
-/* ────────────────────────────────────────────
-   ALIGNMENT
-──────────────────────────────────────────── */
+
 function applyAlign(align) {
   pushUndo();
   if (!restoreSelection()) return;
@@ -1130,9 +1223,7 @@ document.getElementById('align-left').addEventListener('click',   () => applyAli
 document.getElementById('align-center').addEventListener('click', () => applyAlign('center'));
 document.getElementById('align-right').addEventListener('click',  () => applyAlign('right'));
 
-/* ────────────────────────────────────────────
-   COLOR
-──────────────────────────────────────────── */
+
 colorSwatch.addEventListener('click', () => colorInput.click());
 colorInput.addEventListener('input',  () => { colorSwatch.style.background = colorInput.value; });
 
@@ -1161,9 +1252,7 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
   syncOutput(); saveSelection();
 });
 
-/* ────────────────────────────────────────────
-   UNDO STACK
-──────────────────────────────────────────── */
+
 const undoStack = [];
 const redoStack = [];
 let lastHTML = richEditor.innerHTML;
@@ -1174,7 +1263,7 @@ function pushUndo() {
   if (current === lastHTML) return;
   undoStack.push(lastHTML);
   if (undoStack.length > 100) undoStack.shift();
-  redoStack.length = 0; // clear redo on new action
+  redoStack.length = 0; 
   lastHTML = current;
 }
 
@@ -1225,9 +1314,7 @@ document.addEventListener('keydown', e => {
 
 richEditor.addEventListener('input', scheduleUndoPush);
 
-/* ────────────────────────────────────────────
-   BOLD / ITALIC / UNDERLINE / STRIKETHROUGH
-──────────────────────────────────────────── */
+
 [['bold-btn','bold'],['italic-btn','italic'],['under-btn','underline'],['strike-btn','strikeThrough']].forEach(([id, cmd]) => {
   document.getElementById(id).addEventListener('click', () => {
     pushUndo();
@@ -1237,9 +1324,7 @@ richEditor.addEventListener('input', scheduleUndoPush);
   });
 });
 
-/* ────────────────────────────────────────────
-   APPLY CSS CLASS
-──────────────────────────────────────────── */
+
 function applyClass(className) {
   pushUndo();
   if (!restoreSelection()) return;
@@ -1300,9 +1385,7 @@ function applyClass(className) {
   statusEl.textContent = `Applied class "${className}"`;
 }
 
-/* ────────────────────────────────────────────
-   CLASS PANEL
-──────────────────────────────────────────── */
+
 document.getElementById('panel-toggle').addEventListener('click', () => classPanel.classList.toggle('open'));
 document.getElementById('panel-close').addEventListener('click',  () => classPanel.classList.remove('open'));
 document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
@@ -1435,9 +1518,7 @@ function renderClassList(classes) {
   classListEl.appendChild(frag);
 }
 
-/* ────────────────────────────────────────────
-   LOAD CSS FROM GITHUB
-──────────────────────────────────────────── */
+
 async function loadCSS() {
   panelStatus.innerHTML = '<span class="spinner"></span> Loading from GitHub...';
   classListEl.innerHTML = '';
@@ -1513,9 +1594,6 @@ document.getElementById('image-modal-insert').addEventListener('click', () => {
   syncOutput();
 });
 
-/* ────────────────────────────────────────────
-   LINK INSERT MODAL
-──────────────────────────────────────────── */
 const linkModal  = document.getElementById('link-modal');
 const linkTextIn = document.getElementById('link-text-input');
 const linkUrlIn  = document.getElementById('link-url-input');
