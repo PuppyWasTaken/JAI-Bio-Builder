@@ -1006,7 +1006,7 @@ const ROOT_VARS = `:root {
 function buildDoc(bodyHTML, bodyCSS) {
 
   const importLines = [];
-  const cleanCSS = rawCSS.replace(/@import\s*[^;]+;/g, match => {
+  const cleanCSS = rawCSS.replace(/@import\s*(?:"[^"]*"|'[^']*'|url\([^)]*\))[^;]*;/g, match => {
     importLines.push(match.trim());
     return '';
   });
