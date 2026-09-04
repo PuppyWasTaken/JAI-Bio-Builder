@@ -237,6 +237,29 @@ img {
     }
     #class-search::placeholder { color: #6a6a5a; }
 
+    #panel-tabs {
+      display: flex; flex-shrink: 0;
+      border-bottom: 1px solid #2e2a1a;
+    }
+    .panel-tab {
+      flex: 1; padding: 8px 6px; font-size: 11px; font-weight: 600;
+      text-align: center; cursor: pointer; white-space: nowrap;
+      color: #b0b7bf; background: #161208;
+      border: none; border-right: 1px solid #2e2a1a;
+      transition: background .15s, color .15s;
+    }
+    .panel-tab:last-child { border-right: none; }
+    .panel-tab:hover:not(.active) { background: #1c1609; color: #d8d3b3; }
+    .panel-tab.active { background: #130f08; color: #75845c; box-shadow: inset 0 -2px 0 #75845c; }
+
+    .fav-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 14px; line-height: 1; color: #5a5748; padding: 0 4px;
+      flex-shrink: 0; transition: color .15s, transform .1s;
+    }
+    .fav-btn:hover { transform: scale(1.2); color: #e0b030; }
+    .fav-btn.faved { color: #e0b030; }
+
     #class-list {
       flex: 1; overflow-y: auto; padding: 6px;
       scrollbar-width: thin; scrollbar-color: #3a3420 transparent;
@@ -502,6 +525,10 @@ footer {
       <h3>CSS Classes</h3>
       <button id="panel-close">×</button>
     </div>
+    <div id="panel-tabs">
+      <button class="panel-tab active" data-tab="all">All Classes</button>
+      <button class="panel-tab" data-tab="favorites">★ Favorites <span id="fav-count">(0)</span></button>
+    </div>
     <div id="panel-status">
       <span id="panel-status-text" style="display:flex;align-items:center;gap:6px">
         <span class="spinner"></span> Loading from GitHub...
@@ -634,6 +661,52 @@ let colorMode  = 'text';
 let allClasses = [];
 let rawCSS     = '';
 let previewBg  = 'rgb(29,12,49)';
+
+const FAV_KEY = 'jaiBioBuilder_favClasses';
+let favClasses = new Set();
+try { favClasses = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch(e) {}
+let activeTab = 'all'; // 'all' | 'favorites'
+
+function saveFavorites() {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify([...favClasses])); } catch(e) {}
+}
+function isFavorite(name) { return favClasses.has(name); }
+function toggleFavorite(name) {
+  if (favClasses.has(name)) favClasses.delete(name); else favClasses.add(name);
+  saveFavorites();
+  updateFavCount();
+  applyTabFilter();
+}
+function updateFavCount() {
+  const el = document.getElementById('fav-count');
+  if (el) el.textContent = `(${favClasses.size})`;
+}
+function getBaseClasses() {
+  return activeTab === 'favorites'
+    ? allClasses.filter(c => favClasses.has(c.name))
+    : allClasses;
+}
+function applyTabFilter() {
+  const q = classSearch.value.toLowerCase();
+  const base = getBaseClasses();
+  filteredClasses = q ? base.filter(c =>
+    c.nameLower.includes(q) || c.cssLower.includes(q)
+  ) : base;
+  currentPage = 1;
+  renderPage();
+}
+
+// Debounce: only re-filter/re-render ~150ms after the user stops typing,
+// instead of on every single keystroke. Feels instant while typing fast,
+// but avoids rebuilding the DOM (and IntersectionObserver) on every key.
+function debounce(fn, wait) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+const debouncedApplyTabFilter = debounce(applyTabFilter, 150);
 
 colorSwatch.style.background = colorInput.value;
 
@@ -1560,13 +1633,15 @@ document.getElementById('panel-toggle').addEventListener('click', () => classPan
 document.getElementById('panel-close').addEventListener('click',  () => classPanel.classList.remove('open'));
 document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
 
-classSearch.addEventListener('input', () => {
-  const q = classSearch.value.toLowerCase();
-  filteredClasses = q ? allClasses.filter(c =>
-    c.name.toLowerCase().includes(q) || c.css.toLowerCase().includes(q)
-  ) : allClasses;
-  currentPage = 1;
-  renderPage();
+classSearch.addEventListener('input', debouncedApplyTabFilter);
+
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeTab = tab.dataset.tab;
+    applyTabFilter();
+  });
 });
 
 pageSizeSelect.addEventListener('change', () => {
@@ -1611,7 +1686,12 @@ function parseCSSClasses(cssText) {
   let m;
   while ((m = re.exec(cssText)) !== null) {
     const name = m[1], css = m[2].trim().replace(/\s+/g, ' ');
-    if (!seen.has(name)) { seen.add(name); results.push({ name, css }); }
+    if (!seen.has(name)) {
+      seen.add(name);
+      // Cache lowercase versions once at parse time so filtering never
+      // has to re-lowercase 1600+ strings on every keystroke.
+      results.push({ name, css, nameLower: name.toLowerCase(), cssLower: css.toLowerCase() });
+    }
   }
   return results;
 }
@@ -1623,7 +1703,10 @@ function renderClassList(classes) {
   if (classObserver) classObserver.disconnect();
   classListEl.innerHTML = '';
   if (!classes.length) {
-    classListEl.innerHTML = '<div style="padding:14px 6px;font-size:12px;color:#7a7a6a">No classes found.</div>';
+    const msg = activeTab === 'favorites'
+      ? 'No favorites yet — click the ☆ on a class to save it here.'
+      : 'No classes found.';
+    classListEl.innerHTML = `<div style="padding:14px 6px;font-size:12px;color:#7a7a6a">${msg}</div>`;
     return;
   }
 
@@ -1656,12 +1739,19 @@ function renderClassList(classes) {
     nameEl.title       = '.' + cls.name;
     nameEl.textContent = '.' + cls.name;
 
+    const favBtn = document.createElement('button');
+    favBtn.className = 'fav-btn' + (isFavorite(cls.name) ? ' faved' : '');
+    favBtn.textContent = isFavorite(cls.name) ? '★' : '☆';
+    favBtn.title = isFavorite(cls.name) ? 'Remove from favorites' : 'Add to favorites';
+    favBtn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(cls.name); });
+
     const btn = document.createElement('button');
     btn.className   = 'apply-btn';
     btn.textContent = 'Apply';
     btn.addEventListener('click', e => { e.stopPropagation(); applyClass(cls.name); });
 
     header.appendChild(nameEl);
+    header.appendChild(favBtn);
     header.appendChild(btn);
 
     const iframe = document.createElement('iframe');
@@ -1697,13 +1787,13 @@ async function loadCSS() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     rawCSS     = await res.text();
     allClasses = parseCSSClasses(rawCSS);
-    filteredClasses = allClasses;
     currentPage = 1;
     const count = allClasses.length;
     panelStatus.innerHTML = count
       ? `<span style="color:#75845c">${count} classes loaded</span>`
       : '<span style="color:#b0b7bf">No classes found yet</span>';
-    renderPage();
+    updateFavCount();
+    applyTabFilter();
     updatePreview();
   } catch (e) {
     panelStatus.innerHTML = `<span style="color:#f87171">Load failed: ${e.message}</span>`;
