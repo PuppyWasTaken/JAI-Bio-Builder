@@ -9,7 +9,7 @@ Classes were imported from the source files on the JanitorAI site. Some classes 
 *FULL DISCLOSURE: THE JAVASCRIPT WAS HEAVILY ASSISTED BY CLAUDE SONNET 4.6 AND 5.0, I DO NOT TAKE CREDIT.*  
 
 Thanks:
-Ace (@aceeenvw) - Suggestions (lightmode/themes, preview sample text, resizable windows, compact toolbar) & Bug Fixes
-Jiggy, Nini - Suggestions (Favouriting classes)
-Harper - Suggestions (Autosave draft)
-Decou - Suggestions (preview background customizer)
+- Ace (@aceeenvw) - Suggestions (lightmode/themes, preview sample text, resizable windows, compact toolbar) & Bug Fixes
+- Jiggy, Nini - Suggestions (Favouriting classes)
+- Harper - Suggestions (Autosave draft)
+- Decou - Suggestions (preview background customizer)
