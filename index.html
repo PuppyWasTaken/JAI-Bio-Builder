@@ -127,6 +127,7 @@ img {
       overflow-y: auto; outline: none;
       font-size: 15px; line-height: 1.75;
       color: #d8d3b3; background: #0e0c09;
+      white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
     }
     #rich-editor p { margin-bottom: 8px; }
     #rich-editor::-webkit-scrollbar { width: 4px; }
@@ -5622,7 +5623,14 @@ for (const axis of ['column', 'row']) {
 }
 
 function syncOutput() {
-  sourceEditor.value = richEditor.innerHTML;
+  // Don't stomp on the textarea's own value while the user is actively
+  // typing in it — re-serializing the DOM mid-edit resets the cursor and
+  // can re-escape a stray "<"/">" into "&lt;"/"&gt;" before the tag is
+  // even finished being typed. Only re-sync it when it's not the active
+  // element (e.g. changes made from the rich editor or toolbar).
+  if (document.activeElement !== sourceEditor) {
+    sourceEditor.value = richEditor.innerHTML;
+  }
   updatePreview();
 
   saveDraft();
@@ -6572,6 +6580,8 @@ document.getElementById('disclaimer-btn').addEventListener('click', openDisclaim
 document.getElementById('disclaimer-modal-x').addEventListener('click', closeDisclaimer);
 document.getElementById('disclaimer-close-btn').addEventListener('click', closeDisclaimer);
 disclaimerModal.addEventListener('click', e => { if (e.target === disclaimerModal) closeDisclaimer(); });
+
+checkForDraft();
 </script>
 </body>
 </html>
