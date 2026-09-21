@@ -8,6 +8,8 @@ This tool is not officially associated with or officially endorsed by JanitorAI.
 Classes were imported from the source files on the JanitorAI site. Some classes may not show properly in your bio. Please use the tool at your own discretion. 
 *FULL DISCLOSURE: THE JAVASCRIPT WAS HEAVILY ASSISTED BY CLAUDE SONNET 4.6 AND 5.0, I DO NOT TAKE CREDIT.*  
 
+Bug reports and feature requests can be submitted here: https://forms.gle/kJ8npmWrx2aBzVx77
+
 Thanks:
 - Ace (@aceeenvw) - Suggestions (lightmode/themes, preview sample text, resizable windows, compact toolbar) & Bug Fixes
 - Jiggy, Nini - Suggestions (Favouriting classes)
