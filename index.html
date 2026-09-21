@@ -6153,10 +6153,10 @@ function applyClass(className) {
     block = block.parentElement;
   }
 
+  const insideP = !!(block && block !== richEditor && block.tagName === 'P');
+
   const isWholeBlock =
-    block &&
-    block !== richEditor &&
-    block.tagName === 'P' &&
+    insideP &&
     range.toString().trim() === block.textContent.trim();
 
   if (isWholeBlock) {
@@ -6167,10 +6167,14 @@ function applyClass(className) {
     return;
   }
 
+  // Partial selection: only <a> and <p> can carry classes (spans get
+  // stripped by the site's sanitizer). If we're already inside a <p>,
+  // wrap the selection in a new <a> (an inline "link-styled" span).
+  // Otherwise, wrap it in a new <p> instead of falling back to <a>.
   const extracted = range.extractContents();
-  const wrapper = document.createElement('a');
+  const wrapper = document.createElement(insideP ? 'a' : 'p');
   wrapper.className = className;
-  wrapper.href = '#';
+  if (insideP) wrapper.href = '#';
   wrapper.appendChild(extracted);
   range.insertNode(wrapper);
 
