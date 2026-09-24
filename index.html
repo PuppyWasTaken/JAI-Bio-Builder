@@ -158,12 +158,14 @@ img {
     #source-editor::-webkit-scrollbar { width: 4px; }
     #source-editor::-webkit-scrollbar-thumb { background: #3a3420; border-radius: 4px; }
 
-    #copy-html-btn {
+    #copy-html-btn,
+    #beautify-html-btn {
       font-size: 10px; padding: 2px 8px;
       border: 1px solid #3a3420; border-radius: 4px;
       background: #1c1609; color: #b0b7bf; cursor: pointer; transition: all .15s;
     }
-    #copy-html-btn:hover, #download-html-btn:hover { background: #2a1f0b; color: #75845c; }
+    #copy-html-btn:hover, #download-html-btn:hover, #beautify-html-btn:hover { background: #2a1f0b; color: #75845c; }
+    #beautify-html-btn.active { color: #75845c; border-color: #75845c; }
 
     #download-html-btn {
       font-size: 10px; padding: 2px 8px;
@@ -736,6 +738,7 @@ footer {
     .color-mode-btn,
     #panel-toggle,
     #copy-html-btn,
+    #beautify-html-btn,
     .page-btn,
     #page-size-select,
     .sample-controls,
@@ -764,6 +767,7 @@ footer {
     .color-mode-btn,
     #panel-toggle,
     #copy-html-btn,
+    #beautify-html-btn,
     .page-btn,
     #page-size-select,
     #sample-tag,
@@ -777,6 +781,7 @@ footer {
     .tb-btn:hover,
     #panel-toggle:hover,
     #copy-html-btn:hover,
+    #beautify-html-btn:hover,
     .page-btn:hover:not(:disabled),
     #preview-background:hover,
     #sample-reset:hover {
@@ -797,6 +802,7 @@ footer {
     #rich-editor,
     #source-editor { background: var(--ui-bg); color: var(--ui-text); }
     #source-editor { scrollbar-color: var(--ui-border-strong) transparent; }
+    #beautify-html-btn.active { color: var(--ui-accent); border-color: var(--ui-accent); }
     #preview-bg-controls label,
     #class-pagination,
     .sample-controls label,
@@ -1300,6 +1306,7 @@ footer {
       <div class="pane-label">
         HTML Output <span style="font-size:9px;color:#75845c;font-weight:400;text-transform:none;letter-spacing:0">(editable)</span>
         <span class="html-output-actions">
+          <button id="beautify-html-btn" type="button" class="active" aria-pressed="true" title="Indent and space out the HTML output (doesn't change how it renders)">Beautify</button>
           <button id="copy-html-btn">Copy</button>
           <button id="download-html-btn" title="Download HTML output">Download</button>
         </span>
@@ -5445,15 +5452,30 @@ function sanitizeHTML(html) {
   template.innerHTML = html;
   const allowedTags = new Set(['a','b','strong','i','em','u','s','strike','span','p','div','br','img','mark','sub','sup','small','blockquote','ul','ol','li','h1','h2','h3','h4','h5','h6','code','pre','hr']);
   const allowedAttrs = new Set(['class','id','style','title','href','target','rel','src','alt','width','height']);
+  const blockSel = 'p,div,ul,ol,li,blockquote,h1,h2,h3,h4,h5,h6,hr,pre';
   function visit(parent) {
-    for (const el of [...parent.children]) {
-      const tag = el.tagName.toLowerCase();
+    for (let el of [...parent.children]) {
+      let tag = el.tagName.toLowerCase();
       if (!allowedTags.has(tag)) {
         visit(el);
         el.replaceWith(...el.childNodes);
         continue;
       }
       visit(el);
+      // <div> gets stripped by the site, so never keep one: a div that only holds inline content
+      // becomes a <p> (attributes kept); a div that wraps other blocks is simply unwrapped.
+      if (tag === 'div') {
+        if (el.querySelector(blockSel)) {
+          el.replaceWith(...el.childNodes);
+          continue;
+        }
+        const p = document.createElement('p');
+        for (const attr of [...el.attributes]) p.setAttribute(attr.name, attr.value);
+        p.append(...el.childNodes);
+        el.replaceWith(p);
+        el = p;
+        tag = 'p';
+      }
       for (const attr of [...el.attributes]) {
         let keep = allowedAttrs.has(attr.name);
         if (keep && attr.name === 'href') keep = isSafeURL(attr.value, false);
@@ -5644,6 +5666,166 @@ for (const axis of ['column', 'row']) {
   handle.addEventListener('dblclick', () => { setRatio(55); saveLayout(); });
 }
 
+/* ---------- HTML output beautifier ----------
+   Pretty-prints the HTML output (indentation + blank lines between blocks/links).
+   Only whitespace that is already collapsible is touched, so the rendered result is unchanged:
+   - blocks (<p>, <div>, lists, headings, etc.) and links sitting between blocks go on their own lines
+   - long inline content is wrapped only where a space already existed
+   - <pre> content and inline elements' insides are never modified */
+const BEAUTIFY_KEY = 'jaiBioBuilder_beautify';
+let beautifyOutput = true;
+try { if (localStorage.getItem(BEAUTIFY_KEY) === '0') beautifyOutput = false; } catch (e) {}
+
+const BEAUTIFY_WIDTH = 100;
+const BEAUTIFY_INDENT = '  ';
+const BLOCK_TAGS = new Set(['p','div','ul','ol','li','blockquote','h1','h2','h3','h4','h5','h6','hr','pre']);
+const BLOCK_SELECTOR = [...BLOCK_TAGS].join(',');
+const RAW_TAGS = new Set(['pre','style','script','textarea']);
+
+function isBlockish(node) {
+  return !!node && node.nodeType === 1 &&
+    (BLOCK_TAGS.has(node.tagName.toLowerCase()) || !!node.querySelector(BLOCK_SELECTOR));
+}
+
+function escapeTextForOutput(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\u00a0/g, '&nbsp;');
+}
+
+function tokenizeRun(nodes) {
+  const tokens = [];
+  let space = false;
+  for (const n of nodes) {
+    if (n.nodeType === 3) {
+      for (const part of n.data.split(/([ \t\r\n\f]+)/)) {
+        if (part === '') continue;
+        if (/^[ \t\r\n\f]+$/.test(part)) space = true;
+        else { tokens.push({ s: escapeTextForOutput(part), space }); space = false; }
+      }
+    } else if (n.nodeType === 8) {
+      tokens.push({ s: '<!--' + n.data + '-->', space }); space = false;
+    } else if (n.nodeType === 1 && n.tagName === 'BR') {
+      tokens.push({ s: '<br>', br: true }); space = false;
+    } else if (n.nodeType === 1) {
+      tokens.push({ s: n.outerHTML, space, link: n.tagName === 'A' }); space = false;
+    }
+  }
+  return tokens;
+}
+
+function layoutTokens(tokens, pad) {
+  // When a run mixes text and links, each link sits on its own line, indented one level deeper than
+  // the text. A break is only made where whitespace already existed, so nothing changes visually.
+  const mixed = tokens.some(t => !t.link && !t.br);
+  const linkPad = mixed ? pad + BEAUTIFY_INDENT : pad;
+  const lines = [];
+  let line = '', linePad = pad, prev = null;
+  for (const t of tokens) {
+    if (t.br) { lines.push(linePad + line + '<br>'); line = ''; linePad = pad; prev = t; continue; }
+    if (!line) { line = t.s; linePad = t.link ? linkPad : pad; }
+    else if (t.space && (t.link || (prev && prev.link) ||
+             linePad.length + line.length + 1 + t.s.length > BEAUTIFY_WIDTH)) {
+      lines.push(linePad + line);
+      line = t.s; linePad = t.link ? linkPad : pad;
+    }
+    else line += (t.space ? ' ' : '') + t.s;
+    prev = t;
+  }
+  if (line) lines.push(linePad + line);
+  return lines;
+}
+
+function formatBlock(el, depth) {
+  const pad = BEAUTIFY_INDENT.repeat(depth);
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'hr' || RAW_TAGS.has(tag)) return [pad + el.outerHTML];
+
+  const shallow = el.cloneNode(false).outerHTML;
+  const close = '</' + tag + '>';
+  const open = shallow.slice(0, shallow.length - close.length);
+  const kids = [...el.childNodes];
+
+  if (kids.some(isBlockish)) {
+    return [pad + open, ...formatChildren(el, depth + 1), pad + close];
+  }
+  const tokens = tokenizeRun(kids);
+  if (!tokens.length) return [pad + open + close];
+  const inner = layoutTokens(tokens, '');
+  const hasBr = tokens.some(t => t.br);
+  if (inner.length === 1 && (!hasBr || tokens.length === 1) &&
+      pad.length + open.length + inner[0].length + close.length <= BEAUTIFY_WIDTH) {
+    return [pad + open + inner[0] + close];
+  }
+  return [pad + open, ...layoutTokens(tokens, pad + BEAUTIFY_INDENT), pad + close];
+}
+
+function formatChildren(parent, depth) {
+  const pad = BEAUTIFY_INDENT.repeat(depth);
+  const items = [];
+  let run = null;
+  for (const node of parent.childNodes) {
+    if (isBlockish(node)) { run = null; items.push({ block: node }); }
+    else if (node.nodeType === 1 || node.nodeType === 3 || node.nodeType === 8) {
+      if (!run) { run = []; items.push({ run }); }
+      run.push(node);
+    }
+  }
+  const isList = parent.nodeType === 1 && /^(ul|ol)$/i.test(parent.tagName);
+  const lines = [];
+  for (const item of items) {
+    const chunk = item.block
+      ? formatBlock(item.block, depth)
+      : layoutTokens(tokenizeRun(item.run), pad);
+    if (!chunk.length) continue;
+    if (lines.length && !isList) lines.push('');
+    lines.push(...chunk);
+  }
+  return lines;
+}
+
+function beautifyHTML(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  return formatChildren(tpl.content, 0).join('\n');
+}
+
+/* Reverse of beautifyHTML: strips the layout whitespace again before HTML typed/pasted into the
+   output box is loaded back into the editor (which uses white-space: pre-wrap). */
+function compactContainer(parent, blockContext) {
+  const kids = [...parent.childNodes];
+  for (const n of kids) {
+    if (n.nodeType === 3) n.data = n.data.replace(/[ \t\r\f]*\n[ \t\r\n\f]*/g, ' ');
+  }
+  for (const n of kids) {
+    if (n.nodeType !== 1 || RAW_TAGS.has(n.tagName.toLowerCase())) continue;
+    compactContainer(n, isBlockish(n));
+  }
+  const ws = /^[ \t\r\n\f]+/, wsEnd = /[ \t\r\n\f]+$/;
+  kids.forEach((n, i) => {
+    if (n.nodeType !== 3) return;
+    const prev = kids[i - 1], next = kids[i + 1];
+    const edgeBefore = isBlockish(prev) || (prev && prev.nodeName === 'BR') || (blockContext && !prev);
+    const edgeAfter  = isBlockish(next) || (next && next.nodeName === 'BR') || (blockContext && !next);
+    if (edgeBefore) n.data = n.data.replace(ws, '');
+    if (edgeAfter)  n.data = n.data.replace(wsEnd, '');
+    if (n.data === '') n.remove();
+  });
+}
+
+function compactHTML(html) {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  compactContainer(tpl.content, true);
+  return tpl.innerHTML;
+}
+
+function getOutputHTML() {
+  const raw = richEditor.innerHTML;
+  return beautifyOutput ? beautifyHTML(raw) : raw;
+}
+function sourceToEditorHTML() {
+  return sanitizeHTML(beautifyOutput ? compactHTML(sourceEditor.value) : sourceEditor.value);
+}
+
 function syncOutput() {
   // Don't stomp on the textarea's own value while the user is actively
   // typing in it — re-serializing the DOM mid-edit resets the cursor and
@@ -5651,12 +5833,19 @@ function syncOutput() {
   // even finished being typed. Only re-sync it when it's not the active
   // element (e.g. changes made from the rich editor or toolbar).
   if (document.activeElement !== sourceEditor) {
-    sourceEditor.value = richEditor.innerHTML;
+    sourceEditor.value = getOutputHTML();
   }
   updatePreview();
 
   saveDraft();
 }
+
+// Pressing Enter in the editor should start a new <p>, not a <div> (the site strips <div>).
+function useParagraphSeparator() {
+  try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
+}
+useParagraphSeparator();
+richEditor.addEventListener('focus', useParagraphSeparator);
 
 richEditor.addEventListener('input', syncOutput);
 
@@ -5681,7 +5870,7 @@ sourceEditor.addEventListener('input', () => {
 
     if (document.activeElement !== sourceEditor) return;
     pushUndo();
-    richEditor.innerHTML = sanitizeHTML(sourceEditor.value);
+    richEditor.innerHTML = sourceToEditorHTML();
     syncOutput();
     statusEl.textContent = 'HTML applied to editor';
   }, 400);
@@ -5691,7 +5880,7 @@ sourceEditor.addEventListener('input', () => {
 sourceEditor.addEventListener('blur', () => {
   clearTimeout(_htmlEditTimer);
   if (sourceEditor.dataset.userEdited === '1') {
-    richEditor.innerHTML = sanitizeHTML(sourceEditor.value);
+    richEditor.innerHTML = sourceToEditorHTML();
 
     syncOutput();
     sourceEditor.dataset.userEdited = '';
@@ -5716,6 +5905,20 @@ document.getElementById('manual-copy-close').addEventListener('click', closeManu
 document.getElementById('manual-copy-done').addEventListener('click', closeManualCopyModal);
 document.getElementById('manual-copy-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('manual-copy-modal')) closeManualCopyModal();
+});
+
+const beautifyBtn = document.getElementById('beautify-html-btn');
+function refreshBeautifyBtn() {
+  beautifyBtn.classList.toggle('active', beautifyOutput);
+  beautifyBtn.setAttribute('aria-pressed', String(beautifyOutput));
+}
+refreshBeautifyBtn();
+beautifyBtn.addEventListener('click', () => {
+  beautifyOutput = !beautifyOutput;
+  try { localStorage.setItem(BEAUTIFY_KEY, beautifyOutput ? '1' : '0'); } catch (e) {}
+  refreshBeautifyBtn();
+  sourceEditor.value = getOutputHTML();
+  statusEl.textContent = beautifyOutput ? 'HTML output beautified' : 'HTML output set to compact';
 });
 
 const downloadHtmlBtn = document.getElementById('download-html-btn');
