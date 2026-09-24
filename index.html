@@ -5712,6 +5712,14 @@ function tokenizeRun(nodes) {
   return tokens;
 }
 
+// A single <br> at the very end of a block adds nothing visible (browsers collapse it), so it is
+// left out of the output; two in a row (a deliberate blank line) are kept.
+function dropTrailingBr(tokens) {
+  const n = tokens.length;
+  if (n > 1 && tokens[n - 1].br && !tokens[n - 2].br) tokens.pop();
+  return tokens;
+}
+
 function layoutTokens(tokens, pad) {
   // When a run mixes text and links, each link sits on its own line, indented one level deeper than
   // the text. A break is only made where whitespace already existed, so nothing changes visually.
@@ -5747,7 +5755,7 @@ function formatBlock(el, depth) {
   if (kids.some(isBlockish)) {
     return [pad + open, ...formatChildren(el, depth + 1), pad + close];
   }
-  const tokens = tokenizeRun(kids);
+  const tokens = dropTrailingBr(tokenizeRun(kids));
   if (!tokens.length) return [pad + open + close];
   const inner = layoutTokens(tokens, '');
   const hasBr = tokens.some(t => t.br);
@@ -5774,7 +5782,7 @@ function formatChildren(parent, depth) {
   for (const item of items) {
     const chunk = item.block
       ? formatBlock(item.block, depth)
-      : layoutTokens(tokenizeRun(item.run), pad);
+      : layoutTokens(dropTrailingBr(tokenizeRun(item.run)), pad);
     if (!chunk.length) continue;
     if (lines.length && !isList) lines.push('');
     lines.push(...chunk);
@@ -5847,7 +5855,93 @@ function useParagraphSeparator() {
 useParagraphSeparator();
 richEditor.addEventListener('focus', useParagraphSeparator);
 
-richEditor.addEventListener('input', syncOutput);
+// Shift+Enter inserts a real <br> inside the current <p>; plain Enter starts a new <p>.
+// (Done by hand: in this white-space:pre-wrap editor the browser's own line break is a "\n"
+// character, which is not an HTML line break and would be lost in the HTML output.)
+function insertLineBreak() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (!richEditor.contains(range.commonAncestorContainer)) return;
+  range.deleteContents();
+  const br = document.createElement('br');
+  range.insertNode(br);
+  // A <br> with nothing after it in its block is collapsed by browsers, so add a placeholder <br>
+  // to make the new empty line visible (and give the caret somewhere to sit).
+  let block = br.parentNode;
+  while (block !== richEditor && !/^(P|DIV|LI|H[1-6]|BLOCKQUOTE|PRE)$/.test(block.nodeName)) block = block.parentNode;
+  const after = document.createRange();
+  after.setStartAfter(br);
+  after.setEnd(block, block.childNodes.length);
+  const rest = after.cloneContents();
+  if (!rest.textContent.length && !rest.querySelector('br,img')) br.after(document.createElement('br'));
+  const caret = document.createRange();
+  caret.setStartAfter(br);
+  caret.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(caret);
+  richEditor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+richEditor.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+  e.preventDefault();
+  pushUndo();
+  insertLineBreak();
+});
+
+// Text typed straight into the editor root (no <p> around it) gets wrapped in a <p> right away.
+let _ensuringP = false;
+function ensureParagraphs() {
+  if (_ensuringP) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !richEditor.contains(sel.anchorNode) || sel.anchorNode === richEditor) return;
+  let node = sel.anchorNode;
+  while (node.parentNode && node.parentNode !== richEditor) node = node.parentNode;
+  const inlineRoot = node.nodeType === 3 ||
+    (node.nodeType === 1 && /^(B|STRONG|I|EM|U|S|STRIKE|SPAN|MARK|SUB|SUP|SMALL|BR|CODE)$/.test(node.tagName));
+  if (!inlineRoot) return;
+  _ensuringP = true;
+  try { document.execCommand('formatBlock', false, 'p'); } catch (e) {}
+  _ensuringP = false;
+}
+
+// Tidy content loaded into the editor (saved drafts etc.): "\n" characters become <br>, and loose
+// root-level text is wrapped in <p>.
+function normalizeEditorContent() {
+  const walker = document.createTreeWalker(richEditor, NodeFilter.SHOW_TEXT);
+  const texts = [];
+  while (walker.nextNode()) texts.push(walker.currentNode);
+  for (const n of texts) {
+    if (!n.data.includes('\n') || (n.parentElement && n.parentElement.closest('pre'))) continue;
+    if (!n.data.trim() && (n.parentNode === richEditor || /^(UL|OL)$/.test(n.parentNode.nodeName))) continue;
+    const frag = document.createDocumentFragment();
+    const parts = n.data.split('\n');
+    parts.forEach((part, i) => {
+      if (part) frag.append(part);
+      if (i < parts.length - 1) frag.append(document.createElement('br'));
+    });
+    n.replaceWith(frag);
+  }
+  const blockRe = /^(P|DIV|UL|OL|LI|BLOCKQUOTE|H[1-6]|HR|PRE)$/;
+  let run = [];
+  const flush = () => {
+    const meaningful = run.some(n => (n.nodeType === 3 && n.data.trim()) ||
+      (n.nodeType === 1 && !/^(A|IMG)$/.test(n.nodeName)));
+    if (run.length && meaningful) {
+      const p = document.createElement('p');
+      run[0].before(p);
+      p.append(...run);
+    }
+    run = [];
+  };
+  for (const n of [...richEditor.childNodes]) {
+    if (n.nodeType === 1 && blockRe.test(n.nodeName)) flush();
+    else run.push(n);
+  }
+  flush();
+}
+
+richEditor.addEventListener('input', () => { ensureParagraphs(); syncOutput(); });
 
 richEditor.addEventListener('paste', e => {
   e.preventDefault();
@@ -6011,6 +6105,7 @@ setInterval(updateAutosaveIndicator, 3000);
 function applyDraft(draft) {
 
   richEditor.innerHTML = sanitizeHTML(draft.html);
+  normalizeEditorContent();
   if (draft.previewBg) {
     previewBg = draft.previewBg;
     const key = backgroundKeyForColor(draft.previewBg);
