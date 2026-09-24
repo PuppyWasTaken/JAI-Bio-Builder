@@ -426,6 +426,7 @@ img {
     }
     .copy-class-btn:hover { background: #2a1f0b; color: #75845c; border-color: #75845c; }
 
+    .class-preview-wrap { background: rgb(29, 12, 49); } /* real colour is set inline from previewBg */
     .class-preview-iframe {
       width: 100%;
       border: none;
@@ -433,7 +434,14 @@ img {
       min-height: 40px;
       background: rgb(29, 12, 49);
 		max-height:150px;
+      /* The app is color-scheme:dark but the preview documents are plain (light) documents.
+         When those differ the browser puts an opaque WHITE backing behind the iframe, which
+         shows whenever the document hasn't painted yet. Matching the scheme keeps it transparent. */
+      color-scheme: light;
+      /* Stay invisible until the preview document has loaded and painted (see renderClassList). */
+      opacity: 0;
     }
+    .class-preview-iframe.is-ready { opacity: 1; }
 
     .class-css-details { border-top: 1px solid #2e2a1a; background: #0e0b07; }
     .class-css-details summary {
@@ -5014,6 +5022,7 @@ function applyTabFilter() {
   recomputeFilteredClasses();
   currentPage = 1;
   renderPage();
+  classListEl.scrollTop = 0;
 }
 
 
@@ -5459,16 +5468,29 @@ function sanitizeHTML(html) {
   return template.innerHTML;
 }
 
-function buildDoc(bodyHTML, bodyCSS) {
+/* The site stylesheet is ~370 KB and gets embedded in every preview document, so only
+   rebuild the combined string when rawCSS actually changes (not once per iframe). */
+let _docCSSSource = null, _docCSS = '';
+function getDocCSS() {
+  if (_docCSSSource !== rawCSS) {
+    const importLines = [];
+    const cleanCSS = rawCSS.replace(/@import\s*(?:"[^"]*"|'[^']*'|url\([^)]*\))[^;]*;/g, match => {
+      importLines.push(match.trim());
+      return '';
+    });
+    _docCSS = importLines.join('\n') + '\n' + ROOT_VARS + '\n' + cleanCSS;
+    _docCSSSource = rawCSS;
+  }
+  return _docCSS;
+}
 
-  const importLines = [];
-  const cleanCSS = rawCSS.replace(/@import\s*(?:"[^"]*"|'[^']*'|url\([^)]*\))[^;]*;/g, match => {
-    importLines.push(match.trim());
-    return '';
-  });
-  const fullCSS = importLines.join('\n') + '\n' + ROOT_VARS + '\n' + cleanCSS;
+function buildDoc(bodyHTML, bodyCSS) {
+  const fullCSS = getDocCSS();
   const canvasCSS = `html,body{margin:0;width:100%;min-height:100%;}html{background:${previewBg};background-repeat:no-repeat;background-size:100% 100%;}body{width:auto;max-width:100%;min-width:0;min-height:100vh;background:${previewBg};background-repeat:no-repeat;background-size:100% 100%;}`;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${fullCSS}</style><style>${canvasCSS}body{${bodyCSS || ''}}img{max-width:100%;}</style></head><body>${bodyHTML}</body></html>`;
+  // Inline background on <html> so the very first paint already has the right colour,
+  // even while the (large) stylesheet below is still being parsed.
+  const htmlBg = String(previewBg).replace(/"/g, '&quot;');
+  return `<!DOCTYPE html><html style="background:${htmlBg}"><head><meta charset="UTF-8"><style>${fullCSS}</style><style>${canvasCSS}body{${bodyCSS || ''}}img{max-width:100%;}</style></head><body>${bodyHTML}</body></html>`;
 }
 
 
@@ -6323,12 +6345,170 @@ function parseCSSClasses(cssText) {
 }
 
 
+/* ---- Class preview cards -------------------------------------------------------
+   Every card owns an <iframe> whose document embeds the whole site stylesheet, so
+   creating one is expensive and, until it has loaded and painted, it can flash.
+
+   To keep searching smooth:
+   1. Cards are cached by class name and reconciled against the new result list.
+      Cards that are still in the results are left untouched (an iframe reloads if it is
+      removed from / re-inserted into the DOM), only missing ones are built or dropped.
+   2. A brand-new iframe stays invisible (opacity:0 on a wrapper painted with the preview
+      background) until its document has loaded, then it is revealed.
+   3. Changing the sample text / tag swaps the <body> of already-loaded iframes in place
+      instead of navigating them again.                                                   */
 let classObserver = null;
+const classCardCache = new Map();  // class name -> { item, iframe } for cards currently in the DOM
+let cardCacheKey  = '';            // css version + preview bg; a change makes every card stale
+let cardSampleKey = '';            // sample tag + text; a change re-renders loaded cards in place
+let cssVersion    = 0;             // bumped whenever a new stylesheet is loaded
+
+function getClassObserver() {
+  if (!classObserver) {
+    classObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const iframe = entry.target;
+        if (!iframe.dataset.loaded) {
+          iframe.dataset.loaded = '1';
+          iframe.srcdoc = buildClassPreviewDoc(iframe.dataset.clsName);
+        }
+        classObserver.unobserve(iframe);
+      });
+    }, { root: classListEl, rootMargin: '600px 0px', threshold: 0.01 });
+  }
+  return classObserver;
+}
+
+function buildClassPreviewDoc(clsName) {
+  return buildDoc(
+    getClassSampleHTML(clsName),
+    `font-family:system-ui,sans-serif;font-size:12px;padding:8px 10px;background:${previewBg};color:${previewBg === '#ffffff' ? '#202024' : '#ffffff'};overflow-wrap:anywhere;`
+  );
+}
+
+function fitPreviewIframe(iframe) {
+  try {
+    const h = iframe.contentDocument.body.scrollHeight;
+    iframe.style.height = Math.max(36, h + 6) + 'px';
+  } catch(e) {}
+}
+
+function dropClassCards() {
+  if (classObserver) classObserver.disconnect();
+  classCardCache.clear();
+  classListEl.innerHTML = '';
+}
+
+// Sample text/tag changed: update cards that already finished loading without reloading them.
+function refreshCardSamples() {
+  classCardCache.forEach(({ iframe }) => {
+    if (!iframe.dataset.loaded) return;                       // not built yet -> observer will use the new sample
+    if (iframe.classList.contains('is-ready')) {
+      try {
+        iframe.contentDocument.body.innerHTML = getClassSampleHTML(iframe.dataset.clsName);
+        fitPreviewIframe(iframe);
+        return;
+      } catch(e) { /* fall through and reload */ }
+    }
+    iframe.srcdoc = buildClassPreviewDoc(iframe.dataset.clsName); // still loading (or in-place failed): restart it
+  });
+}
+
+function buildClassCard(cls) {
+  const item = document.createElement('div');
+  item.className = 'class-item';
+
+  const header = document.createElement('div');
+  header.className = 'class-item-header';
+
+  const nameEl = document.createElement('span');
+  nameEl.className   = 'class-name';
+  nameEl.title       = '.' + cls.name;
+  nameEl.textContent = '.' + cls.name;
+
+  const favBtn = document.createElement('button');
+  const favoriteState = isFavorite(cls.name);
+  favBtn.className = 'fav-btn' + (favoriteState ? ' faved' : '');
+  favBtn.dataset.className = cls.name;
+  favBtn.textContent = favoriteState ? '★' : '☆';
+  favBtn.title = favoriteState ? 'Remove from favorites' : 'Add to favorites';
+  favBtn.setAttribute('aria-pressed', String(favoriteState));
+  favBtn.setAttribute('aria-label', favoriteState ? 'Remove from favorites' : 'Add from favorites');
+  favBtn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(cls.name); });
+
+  const actionWrap = document.createElement('div');
+  actionWrap.className = 'class-actions';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-class-btn';
+  copyBtn.textContent = 'Copy';
+  copyBtn.title = 'Copy class name';
+  copyBtn.setAttribute('aria-label', 'Copy class name');
+  copyBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    copyClassName(cls.name, copyBtn);
+  });
+
+  const btn = document.createElement('button');
+  btn.className   = 'apply-btn';
+  btn.textContent = 'Apply';
+  btn.addEventListener('click', e => { e.stopPropagation(); applyClass(cls.name); });
+
+  actionWrap.appendChild(copyBtn);
+  actionWrap.appendChild(btn);
+  header.appendChild(nameEl);
+  header.appendChild(favBtn);
+  header.appendChild(actionWrap);
+
+  const iframe = document.createElement('iframe');
+  iframe.className = 'class-preview-iframe';
+  iframe.setAttribute('sandbox', 'allow-same-origin');
+  iframe.setAttribute('referrerpolicy', 'no-referrer');
+  iframe.dataset.clsName = cls.name;
+  iframe.addEventListener('load', () => {
+    fitPreviewIframe(iframe);
+    // A fresh iframe fires 'load' for its empty about:blank document first; only the real
+    // preview document (about:srcdoc) may be revealed.
+    let isPreviewDoc = false;
+    try { isPreviewDoc = iframe.contentDocument.URL === 'about:srcdoc'; } catch(e) { isPreviewDoc = !!iframe.dataset.loaded; }
+    if (!isPreviewDoc) return;
+    // Wait two frames so the loaded document has been painted before we un-hide it.
+    requestAnimationFrame(() => requestAnimationFrame(() => iframe.classList.add('is-ready')));
+  });
+
+  // The wrapper carries the preview colour, so the card looks right while the iframe is hidden.
+  const previewWrap = document.createElement('div');
+  previewWrap.className = 'class-preview-wrap';
+  previewWrap.style.background = previewBg;
+  previewWrap.appendChild(iframe);
+
+  const details = document.createElement('details');
+  details.className = 'class-css-details';
+  const summary = document.createElement('summary');
+  summary.textContent = 'View Properties';
+  const pre = document.createElement('pre');
+  pre.textContent = cls.css;
+  details.appendChild(summary);
+  details.appendChild(pre);
+
+  item.appendChild(header);
+  item.appendChild(previewWrap);
+  item.appendChild(details);
+  return { item, iframe };
+}
 
 function renderClassList(classes) {
-  if (classObserver) classObserver.disconnect();
-  classListEl.innerHTML = '';
+  // New stylesheet or preview background -> every cached card is stale, start over.
+  const cacheKey = cssVersion + '|' + previewBg;
+  if (cacheKey !== cardCacheKey) { dropClassCards(); cardCacheKey = cacheKey; }
+
+  // Sample text / tag changed -> update the cards we are keeping.
+  const sampleKey = sampleTagEl.value + '\u0000' + sampleTextEl.value;
+  if (sampleKey !== cardSampleKey) { cardSampleKey = sampleKey; refreshCardSamples(); }
+
   if (!classes.length) {
+    dropClassCards();
     const msg = activeTab === 'favorites'
       ? 'No favorites yet — click the ☆ on a class to save it here.'
       : 'No classes found.';
@@ -6336,107 +6516,41 @@ function renderClassList(classes) {
     return;
   }
 
-  classObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const iframe = entry.target;
-      if (!iframe.dataset.loaded) {
-        const clsName = iframe.dataset.clsName;
-        iframe.srcdoc = buildDoc(
-          getClassSampleHTML(clsName),
-          `font-family:system-ui,sans-serif;font-size:12px;padding:8px 10px;background:${previewBg};color:${previewBg === '#ffffff' ? '#202024' : '#ffffff'};overflow-wrap:anywhere;`
-        );
-        iframe.dataset.loaded = '1';
-      }
-      classObserver.unobserve(iframe);
-    });
-  }, { root: classListEl, rootMargin: '600px 0px', threshold: 0.01 });
+  const observer = getClassObserver();
+  const wanted = new Set(classes.map(c => c.name));
 
-  const frag = document.createDocumentFragment();
-  classes.forEach(cls => {
-    const item = document.createElement('div');
-    item.className = 'class-item';
-
-    const header = document.createElement('div');
-    header.className = 'class-item-header';
-
-    const nameEl = document.createElement('span');
-    nameEl.className   = 'class-name';
-    nameEl.title       = '.' + cls.name;
-    nameEl.textContent = '.' + cls.name;
-
-    const favBtn = document.createElement('button');
-    const favoriteState = isFavorite(cls.name);
-    favBtn.className = 'fav-btn' + (favoriteState ? ' faved' : '');
-    favBtn.dataset.className = cls.name;
-    favBtn.textContent = favoriteState ? '★' : '☆';
-    favBtn.title = favoriteState ? 'Remove from favorites' : 'Add to favorites';
-    favBtn.setAttribute('aria-pressed', String(favoriteState));
-    favBtn.setAttribute('aria-label', favoriteState ? 'Remove from favorites' : 'Add from favorites');
-    favBtn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(cls.name); });
-
-    const actionWrap = document.createElement('div');
-    actionWrap.className = 'class-actions';
-
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-class-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.title = 'Copy class name';
-    copyBtn.setAttribute('aria-label', 'Copy class name');
-    copyBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      copyClassName(cls.name, copyBtn);
-    });
-
-    const btn = document.createElement('button');
-    btn.className   = 'apply-btn';
-    btn.textContent = 'Apply';
-    btn.addEventListener('click', e => { e.stopPropagation(); applyClass(cls.name); });
-
-    actionWrap.appendChild(copyBtn);
-    actionWrap.appendChild(btn);
-    header.appendChild(nameEl);
-    header.appendChild(favBtn);
-    header.appendChild(actionWrap);
-
-    const iframe = document.createElement('iframe');
-    iframe.className = 'class-preview-iframe';
-    iframe.setAttribute('sandbox', 'allow-same-origin');
-    iframe.setAttribute('referrerpolicy', 'no-referrer');
-    iframe.dataset.clsName = cls.name;
-    iframe.addEventListener('load', () => {
-      try {
-        const h = iframe.contentDocument.body.scrollHeight;
-        iframe.style.height = Math.max(36, h + 6) + 'px';
-      } catch(e) {}
-    });
-
-    const previewWrap = document.createElement('div');
-    previewWrap.appendChild(iframe);
-
-    const details = document.createElement('details');
-    details.className = 'class-css-details';
-    const summary = document.createElement('summary');
-    summary.textContent = 'View Properties';
-    const pre = document.createElement('pre');
-    pre.textContent = cls.css;
-    details.appendChild(summary);
-    details.appendChild(pre);
-
-    item.appendChild(header);
-    item.appendChild(previewWrap);
-    item.appendChild(details);
-    frag.appendChild(item);
-    classObserver.observe(iframe);
+  // 1) Remove the empty-state message and any cards that are no longer in the results.
+  Array.from(classListEl.children).forEach(el => { if (!el.classList.contains('class-item')) el.remove(); });
+  classCardCache.forEach((card, name) => {
+    if (wanted.has(name)) return;
+    observer.unobserve(card.iframe);
+    card.item.remove();
+    classCardCache.delete(name);
   });
 
-  classListEl.appendChild(frag);
+  // 2) Walk the wanted list in order. Cards that are already in the right place are not touched;
+  //    new ones are inserted before the next existing card.
+  let ref = classListEl.firstElementChild;
+  classes.forEach(cls => {
+    let card = classCardCache.get(cls.name);
+    if (!card) {
+      card = buildClassCard(cls);
+      classCardCache.set(cls.name, card);
+      classListEl.insertBefore(card.item, ref);
+      observer.observe(card.iframe);
+    } else if (card.item === ref) {
+      ref = ref.nextElementSibling;
+    } else {
+      classListEl.insertBefore(card.item, ref);   // out of order (rare) - this one will reload
+    }
+  });
 }
 
 
 
 function applyLoadedCSS(css, sourceLabel) {
   rawCSS     = css;
+  cssVersion++;
   allClasses = parseCSSClasses(rawCSS);
   currentPage = 1;
   const count = allClasses.length;
