@@ -1205,6 +1205,39 @@ footer {
       #toolbar { padding: 6px 8px; }
       .tb-label { display: none; }
     }
+    #palette-toggle { width: auto; padding: 0 9px; gap: 6px; font-size: 11px; }
+    #palette-panel {
+      position: fixed; z-index: 100; right: 12px; width: 350px;
+      max-width: calc(100vw - 24px); max-height: calc(100dvh - 140px);
+      overflow-y: auto; padding: 14px; border: 1px solid var(--ui-border-strong);
+      border-radius: 10px; background: var(--ui-panel); color: var(--ui-text);
+      box-shadow: 0 12px 36px rgba(0,0,0,.3); font-size: 12px;
+    }
+    #palette-panel[hidden] { display: none; }
+    .palette-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .palette-row > input:not([type="color"]), .palette-row > select { flex: 1; min-width: 0; }
+    #palette-panel h2 { flex: 1; font-size: 13px; color: var(--ui-accent); }
+    #palette-panel button, #palette-panel input, #palette-panel select, #palette-panel textarea {
+      font: inherit; color: var(--ui-text); background: var(--ui-surface-3);
+      border: 1px solid var(--ui-border-strong); border-radius: 5px; padding: 6px 8px;
+    }
+    #palette-panel button { cursor: pointer; }
+    #palette-panel button:hover { border-color: var(--ui-accent); background: var(--ui-surface-hover); }
+    #palette-panel :focus-visible, #palette-toggle:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+    #palette-panel button:disabled { opacity: .45; cursor: default; }
+    #palette-panel button[aria-pressed="true"] { border-color: var(--ui-accent); box-shadow: inset 0 -2px var(--ui-accent); }
+    #palette-panel label { display: block; color: var(--ui-muted); font-size: 11px; margin-bottom: 5px; }
+    #palette-panel p { color: var(--ui-muted); font-size: 11px; line-height: 1.5; }
+    #palette-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .palette-cell { position: relative; min-width: 0; }
+    #palette-panel .palette-colour { display: block; width: 100%; height: 36px; padding: 0; border: 1px solid var(--ui-border-strong); background: var(--swatch); box-shadow: inset 0 0 0 1px rgba(128,128,128,.25); }
+    #palette-panel .palette-colour:hover { background: var(--swatch); outline: 2px solid var(--ui-accent); }
+    #palette-panel .palette-remove { position: absolute; right: -4px; top: -5px; width: 18px; height: 18px; padding: 0; border-radius: 50%; line-height: 1; font-size: 12px; }
+    .palette-hex-label { display: block; text-align: center; font: 8px monospace; margin-top: 4px; color: var(--ui-muted); }
+    #palette-panel textarea { width: 100%; resize: vertical; min-height: 58px; background: var(--ui-input); }
+    #palette-panel input[type="color"] { width: 34px; height: 30px; padding: 2px; cursor: pointer; }
+    #palette-message { min-height: 32px; margin-top: 8px; overflow-wrap: anywhere; }
+    #palette-count { margin-left: auto; color: var(--ui-muted); font-size: 11px; }
 </style>
 </head>
 <body>
@@ -1266,6 +1299,7 @@ footer {
     <button class="color-mode-btn active" id="btn-text-color" title="Text color" aria-label="Text color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19 12 5l6 14"></path><path d="M8.5 14h7"></path></svg></button>
     <button class="color-mode-btn" id="btn-bg-color" title="Highlight color" aria-label="Highlight color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 17 10-10 2 2-10 10-3 1z"></path><path d="M4 20h16"></path></svg></button>
     <button class="tb-btn" id="apply-color-btn" title="Apply color" aria-label="Apply color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg></button>
+    <button class="tb-btn" id="palette-toggle" type="button" aria-controls="palette-panel" aria-expanded="false" title="Saved colour palettes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>Palettes</button>
   </div>
   <div class="tb-group" title="History">
     <button class="tb-btn" id="undo-btn" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a6 6 0 1 1 0 12"></path></svg></button>
@@ -1287,6 +1321,42 @@ footer {
     <button class="header-collapse-btn" id="header-collapse-btn" type="button" aria-label="Collapse header" aria-expanded="true" title="Collapse header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
   </div>
 </div>
+
+<section id="palette-panel" aria-labelledby="palette-heading" hidden>
+  <div class="palette-row">
+    <h2 id="palette-heading">Saved palettes</h2>
+    <button id="palette-close" type="button" aria-label="Close palettes">×</button>
+  </div>
+  <p>Saved in this browser only. Select text, then tap a colour to apply it.</p>
+  <label for="palette-select" style="margin-top:12px">Palette</label>
+  <div class="palette-row">
+    <select id="palette-select"></select>
+    <button id="palette-new" type="button">New</button>
+    <button id="palette-delete" type="button">Delete</button>
+  </div>
+  <label for="palette-name">Palette name</label>
+  <form id="palette-name-form" class="palette-row">
+    <input id="palette-name" maxlength="60" placeholder="Palette name" required>
+    <button type="submit">Rename</button>
+  </form>
+  <div class="palette-row" aria-label="Apply colour as">
+    <button id="palette-text-mode" type="button" aria-pressed="true">Text</button>
+    <button id="palette-bg-mode" type="button" aria-pressed="false">Highlight</button>
+    <span id="palette-count">0 / 24</span>
+  </div>
+  <div id="palette-grid" aria-label="Saved colours"></div>
+  <p id="palette-empty">No colours yet. Add hex codes below or save your current colour.</p>
+  <form id="palette-add-form" style="margin-top:12px">
+    <label for="palette-hex">Add hex codes (separate with spaces, commas or new lines)</label>
+    <textarea id="palette-hex" placeholder="#e05c94, #75845c, #fff" spellcheck="false" aria-describedby="palette-message"></textarea>
+    <div class="palette-row" style="margin-top:6px">
+      <button type="submit" id="palette-add">Add colours</button>
+      <input type="color" id="palette-picker" value="#e05c94" aria-label="Colour to save">
+      <button id="palette-save-current" type="button">Save colour</button>
+    </div>
+  </form>
+  <p id="palette-message" role="status" aria-live="polite"></p>
+</section>
 
 <div id="main">
   <div id="editor-section">
@@ -5426,21 +5496,28 @@ document.getElementById('align-right').addEventListener('click',  () => applyAli
 colorSwatch.addEventListener('click', () => colorInput.click());
 colorInput.addEventListener('input',  () => { colorSwatch.style.background = colorInput.value; });
 
-document.getElementById('btn-text-color').addEventListener('click', () => {
-  colorMode = 'text';
-  document.getElementById('btn-text-color').classList.add('active');
-  document.getElementById('btn-bg-color').classList.remove('active');
-});
-document.getElementById('btn-bg-color').addEventListener('click', () => {
-  colorMode = 'bg';
-  document.getElementById('btn-bg-color').classList.add('active');
-  document.getElementById('btn-text-color').classList.remove('active');
-});
-document.getElementById('apply-color-btn').addEventListener('click', () => {
-  pushUndo();
-  if (!restoreSelection()) return;
+function setColorMode(mode) {
+  colorMode = mode;
+  document.getElementById('btn-text-color').classList.toggle('active', mode === 'text');
+  document.getElementById('btn-bg-color').classList.toggle('active', mode === 'bg');
+  document.getElementById('palette-text-mode').setAttribute('aria-pressed', String(mode === 'text'));
+  document.getElementById('palette-bg-mode').setAttribute('aria-pressed', String(mode === 'bg'));
+}
+document.getElementById('btn-text-color').addEventListener('click', () => setColorMode('text'));
+document.getElementById('btn-bg-color').addEventListener('click', () => setColorMode('bg'));
+function applyCurrentColor() {
+  if (!savedRange || !richEditor.contains(savedRange.commonAncestorContainer)) {
+    statusEl.textContent = 'Select text in the editor first';
+    return false;
+  }
+  // Focus can move the live selection. Restore a clone of the saved range.
+  const targetRange = savedRange.cloneRange();
+  richEditor.focus();
   const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) { statusEl.textContent = 'Select text first'; return; }
+  sel.removeAllRanges();
+  sel.addRange(targetRange);
+  if (sel.isCollapsed) { statusEl.textContent = 'Select text first'; return false; }
+  pushUndo();
   const range = sel.getRangeAt(0);
   const extracted = range.extractContents();
   const span = document.createElement('span');
@@ -5448,8 +5525,195 @@ document.getElementById('apply-color-btn').addEventListener('click', () => {
   else span.style.backgroundColor = colorInput.value;
   span.appendChild(extracted);
   range.insertNode(span);
+  range.selectNodeContents(span);
+  sel.removeAllRanges();
+  sel.addRange(range);
   syncOutput(); saveSelection();
+  return true;
+}
+document.getElementById('apply-color-btn').addEventListener('click', applyCurrentColor);
+
+// Named palettes are stored separately from drafts, so clearing a draft keeps colours.
+const PALETTES_KEY = 'jaiBioBuilder_palettes_v1';
+const palettePanel = document.getElementById('palette-panel');
+const paletteToggle = document.getElementById('palette-toggle');
+const paletteSelect = document.getElementById('palette-select');
+const paletteName = document.getElementById('palette-name');
+const paletteGrid = document.getElementById('palette-grid');
+const paletteHex = document.getElementById('palette-hex');
+const palettePicker = document.getElementById('palette-picker');
+const paletteMessage = document.getElementById('palette-message');
+let paletteState = { active: 0, palettes: [{ name: 'My palette', colours: [] }] };
+let paletteStorageWarning = '';
+
+function normalizePaletteHex(value) {
+  const hex = String(value).trim().replace(/^#/, '');
+  if (!/^(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return null;
+  return '#' + (hex.length === 3 ? [...hex].map(c => c + c).join('') : hex).toLowerCase();
+}
+try {
+  const stored = JSON.parse(localStorage.getItem(PALETTES_KEY) || 'null');
+  if (stored && Array.isArray(stored.palettes)) {
+    const palettes = stored.palettes.filter(p => p && typeof p.name === 'string' && Array.isArray(p.colours))
+      .map(p => ({ name: p.name.trim().slice(0, 60) || 'Untitled palette',
+        colours: [...new Set(p.colours.map(normalizePaletteHex).filter(Boolean))].slice(0, 24) }));
+    if (palettes.length) paletteState = { palettes, active: Number.isInteger(stored.active) && stored.active >= 0 && stored.active < palettes.length ? stored.active : 0 };
+  }
+} catch (e) {
+  paletteStorageWarning = 'Saved palettes could not be loaded. Browser storage may be unavailable.';
+}
+function activePalette() { return paletteState.palettes[paletteState.active]; }
+function persistPalettes(message) {
+  try {
+    localStorage.setItem(PALETTES_KEY, JSON.stringify(paletteState));
+    paletteStorageWarning = '';
+    paletteMessage.textContent = message || 'Saved locally in this browser.';
+  } catch (e) {
+    paletteStorageWarning = 'Browser storage is unavailable or full. Changes will only last for this visit.';
+    paletteMessage.textContent = paletteStorageWarning;
+  }
+}
+function renderPalettes() {
+  paletteSelect.replaceChildren();
+  paletteState.palettes.forEach((palette, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = palette.name;
+    paletteSelect.appendChild(option);
+  });
+  paletteSelect.value = String(paletteState.active);
+  const palette = activePalette();
+  paletteName.value = palette.name;
+  document.getElementById('palette-count').textContent = palette.colours.length + ' / 24';
+  document.getElementById('palette-empty').hidden = palette.colours.length > 0;
+  document.getElementById('palette-add').disabled = palette.colours.length >= 24;
+  document.getElementById('palette-save-current').disabled = palette.colours.length >= 24;
+  paletteGrid.replaceChildren();
+  palette.colours.forEach((hex, index) => {
+    const cell = document.createElement('div');
+    cell.className = 'palette-cell';
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'palette-colour';
+    swatch.style.setProperty('--swatch', hex);
+    swatch.title = 'Apply ' + hex;
+    swatch.setAttribute('aria-label', 'Apply ' + hex);
+    swatch.addEventListener('click', () => {
+      colorInput.value = hex;
+      colorSwatch.style.background = hex;
+      palettePicker.value = hex;
+      paletteMessage.textContent = applyCurrentColor()
+        ? 'Applied ' + hex + ' as ' + (colorMode === 'text' ? 'text colour.' : 'highlight colour.')
+        : 'Colour selected. Select text in the editor, then tap the colour again.';
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'palette-remove';
+    remove.textContent = '×';
+    remove.title = 'Remove ' + hex;
+    remove.setAttribute('aria-label', 'Remove ' + hex);
+    remove.addEventListener('click', () => {
+      palette.colours.splice(index, 1);
+      persistPalettes('Removed ' + hex + '.');
+      renderPalettes();
+      const remaining = paletteGrid.querySelectorAll('.palette-remove');
+      (remaining[Math.min(index, remaining.length - 1)] || paletteHex).focus();
+    });
+    const label = document.createElement('span');
+    label.className = 'palette-hex-label';
+    label.textContent = hex;
+    cell.append(swatch, remove, label);
+    paletteGrid.appendChild(cell);
+  });
+}
+function positionPalettePanel() {
+  const top = document.getElementById('toolbar').getBoundingClientRect().bottom + 8;
+  palettePanel.style.top = top + 'px';
+  palettePanel.style.maxHeight = Math.max(100, window.innerHeight - top - 12) + 'px';
+}
+function closePalettePanel() {
+  palettePanel.hidden = true;
+  paletteToggle.setAttribute('aria-expanded', 'false');
+  paletteToggle.focus();
+}
+paletteToggle.addEventListener('click', () => {
+  if (!palettePanel.hidden) { closePalettePanel(); return; }
+  palettePanel.hidden = false;
+  paletteToggle.setAttribute('aria-expanded', 'true');
+  palettePicker.value = colorInput.value;
+  paletteMessage.textContent = paletteStorageWarning || 'Up to 24 colours per palette. Changes save automatically.';
+  positionPalettePanel();
+  paletteSelect.focus();
 });
+document.getElementById('palette-close').addEventListener('click', closePalettePanel);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !palettePanel.hidden) { e.preventDefault(); closePalettePanel(); }
+});
+window.addEventListener('resize', positionPalettePanel);
+// Keep the editor range when touching/clicking buttons; inputs remain freely editable.
+[palettePanel, paletteToggle].forEach(el => el.addEventListener('mousedown', e => {
+  if (e.target.closest('button')) e.preventDefault();
+}));
+document.getElementById('palette-text-mode').addEventListener('click', () => setColorMode('text'));
+document.getElementById('palette-bg-mode').addEventListener('click', () => setColorMode('bg'));
+colorInput.addEventListener('input', () => { palettePicker.value = colorInput.value; });
+paletteSelect.addEventListener('change', () => {
+  paletteState.active = Number(paletteSelect.value);
+  paletteHex.value = '';
+  persistPalettes();
+  renderPalettes();
+});
+document.getElementById('palette-new').addEventListener('click', () => {
+  let number = paletteState.palettes.length + 1;
+  while (paletteState.palettes.some(p => p.name === 'Palette ' + number)) number++;
+  paletteState.palettes.push({ name: 'Palette ' + number, colours: [] });
+  paletteState.active = paletteState.palettes.length - 1;
+  paletteHex.value = '';
+  persistPalettes('New palette created. Give it a name below.');
+  renderPalettes();
+  paletteName.focus();
+  paletteName.select();
+});
+document.getElementById('palette-name-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = paletteName.value.trim();
+  if (!name) { paletteMessage.textContent = 'Enter a palette name.'; paletteName.focus(); return; }
+  activePalette().name = name.slice(0, 60);
+  persistPalettes('Palette renamed.');
+  renderPalettes();
+});
+document.getElementById('palette-delete').addEventListener('click', () => {
+  if (!window.confirm('Delete palette "' + activePalette().name + '" and its saved colours?')) return;
+  paletteState.palettes.splice(paletteState.active, 1);
+  if (!paletteState.palettes.length) paletteState.palettes.push({ name: 'My palette', colours: [] });
+  paletteState.active = Math.min(paletteState.active, paletteState.palettes.length - 1);
+  paletteHex.value = '';
+  persistPalettes('Palette deleted.');
+  renderPalettes();
+});
+function addPaletteColours(values) {
+  const colours = values.map(normalizePaletteHex);
+  if (!colours.length || colours.some(hex => !hex)) {
+    paletteMessage.textContent = 'Use valid 3- or 6-digit hex codes, such as #fff or #e05c94. Nothing was added.';
+    return false;
+  }
+  const palette = activePalette();
+  const additions = [...new Set(colours)].filter(hex => !palette.colours.includes(hex));
+  if (palette.colours.length + additions.length > 24) {
+    paletteMessage.textContent = 'Each palette holds 24 colours. You have ' + (24 - palette.colours.length) + ' spaces left. Nothing was added.';
+    return false;
+  }
+  palette.colours.push(...additions);
+  persistPalettes(additions.length ? 'Saved ' + additions.length + ' colour(s) locally.' : 'These colours are already in this palette.');
+  renderPalettes();
+  return true;
+}
+document.getElementById('palette-add-form').addEventListener('submit', e => {
+  e.preventDefault();
+  if (addPaletteColours(paletteHex.value.trim().split(/[\s,;]+/).filter(Boolean))) paletteHex.value = '';
+});
+document.getElementById('palette-save-current').addEventListener('click', () => addPaletteColours([palettePicker.value]));
+renderPalettes();
 
 
 const undoStack = [];
