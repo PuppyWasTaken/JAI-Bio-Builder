@@ -76,7 +76,14 @@ img {
       cursor: pointer;
       flex-shrink: 0;
     }
-    #color-input { width: 0; height: 0; opacity: 0; position: absolute; pointer-events: none; }
+    #color-input {
+      width: 88px; padding: 5px 7px;
+      border: 1px solid var(--ui-border, #3a3420); border-radius: 5px;
+      background: var(--ui-input, #1c1609); color: var(--ui-text, #d8d3b3);
+      font: 12px monospace;
+    }
+    #color-input:focus { outline: 2px solid var(--ui-accent, #75845c); outline-offset: 1px; }
+    #color-input[aria-invalid="true"] { border-color: #e05c94; }
 
     .color-mode-btn {
       font-size: 11px; padding: 3px 8px;
@@ -1293,8 +1300,8 @@ footer {
   <div class="tb-group" title="Text color">
     <span class="tb-label">Color</span>
     <div id="color-picker-wrap">
-      <div id="color-swatch" title="Choose color"></div>
-      <input type="color" id="color-input" value="#e05c94" aria-label="Choose text color">
+      <div id="color-swatch" title="Edit hex colour"></div>
+      <input type="text" id="color-input" value="#e05c94" placeholder="#e05c94" aria-label="Text or highlight hex colour" title="Enter a 3- or 6-digit hex colour, such as #f9a or #e05c94" spellcheck="false" autocomplete="off" autocapitalize="off">
     </div>
     <button class="color-mode-btn active" id="btn-text-color" title="Text color" aria-label="Text color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19 12 5l6 14"></path><path d="M8.5 14h7"></path></svg></button>
     <button class="color-mode-btn" id="btn-bg-color" title="Highlight color" aria-label="Highlight color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 17 10-10 2 2-10 10-3 1z"></path><path d="M4 20h16"></path></svg></button>
@@ -5493,8 +5500,20 @@ document.getElementById('align-center').addEventListener('click', () => applyAli
 document.getElementById('align-right').addEventListener('click',  () => applyAlign('right'));
 
 
-colorSwatch.addEventListener('click', () => colorInput.click());
-colorInput.addEventListener('input',  () => { colorSwatch.style.background = colorInput.value; });
+colorSwatch.addEventListener('click', () => { colorInput.focus(); colorInput.select(); });
+colorInput.addEventListener('input', () => {
+  const hex = normalizePaletteHex(colorInput.value);
+  colorInput.setAttribute('aria-invalid', String(!hex));
+  colorInput.setCustomValidity(hex ? '' : 'Enter a valid 3- or 6-digit hex colour.');
+  if (hex) colorSwatch.style.background = hex;
+});
+colorInput.addEventListener('blur', () => {
+  const hex = normalizePaletteHex(colorInput.value);
+  if (hex) colorInput.value = hex;
+});
+colorInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); applyCurrentColor(); }
+});
 
 function setColorMode(mode) {
   colorMode = mode;
@@ -5506,6 +5525,14 @@ function setColorMode(mode) {
 document.getElementById('btn-text-color').addEventListener('click', () => setColorMode('text'));
 document.getElementById('btn-bg-color').addEventListener('click', () => setColorMode('bg'));
 function applyCurrentColor() {
+  const hex = normalizePaletteHex(colorInput.value);
+  if (!hex) {
+    statusEl.textContent = 'Enter a valid hex colour, such as #fff or #e05c94';
+    colorInput.setAttribute('aria-invalid', 'true');
+    colorInput.reportValidity();
+    return false;
+  }
+  colorInput.value = hex;
   if (!savedRange || !richEditor.contains(savedRange.commonAncestorContainer)) {
     statusEl.textContent = 'Select text in the editor first';
     return false;
@@ -5521,8 +5548,8 @@ function applyCurrentColor() {
   const range = sel.getRangeAt(0);
   const extracted = range.extractContents();
   const span = document.createElement('span');
-  if (colorMode === 'text') span.style.color = colorInput.value;
-  else span.style.backgroundColor = colorInput.value;
+  if (colorMode === 'text') span.style.color = hex;
+  else span.style.backgroundColor = hex;
   span.appendChild(extracted);
   range.insertNode(span);
   range.selectNodeContents(span);
@@ -5600,6 +5627,8 @@ function renderPalettes() {
     swatch.setAttribute('aria-label', 'Apply ' + hex);
     swatch.addEventListener('click', () => {
       colorInput.value = hex;
+      colorInput.setAttribute('aria-invalid', 'false');
+      colorInput.setCustomValidity('');
       colorSwatch.style.background = hex;
       palettePicker.value = hex;
       paletteMessage.textContent = applyCurrentColor()
@@ -5640,7 +5669,7 @@ paletteToggle.addEventListener('click', () => {
   if (!palettePanel.hidden) { closePalettePanel(); return; }
   palettePanel.hidden = false;
   paletteToggle.setAttribute('aria-expanded', 'true');
-  palettePicker.value = colorInput.value;
+  palettePicker.value = normalizePaletteHex(colorInput.value) || palettePicker.value;
   paletteMessage.textContent = paletteStorageWarning || 'Up to 24 colours per palette. Changes save automatically.';
   positionPalettePanel();
   paletteSelect.focus();
@@ -5656,7 +5685,10 @@ window.addEventListener('resize', positionPalettePanel);
 }));
 document.getElementById('palette-text-mode').addEventListener('click', () => setColorMode('text'));
 document.getElementById('palette-bg-mode').addEventListener('click', () => setColorMode('bg'));
-colorInput.addEventListener('input', () => { palettePicker.value = colorInput.value; });
+colorInput.addEventListener('input', () => {
+  const hex = normalizePaletteHex(colorInput.value);
+  if (hex) palettePicker.value = hex;
+});
 paletteSelect.addEventListener('change', () => {
   paletteState.active = Number(paletteSelect.value);
   paletteHex.value = '';
