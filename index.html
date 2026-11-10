@@ -84,6 +84,7 @@ img {
     }
     #color-input:focus { outline: 2px solid var(--ui-accent, #75845c); outline-offset: 1px; }
     #color-input[aria-invalid="true"] { border-color: #e05c94; }
+    #color-native-picker { width: 0; height: 0; opacity: 0; position: absolute; pointer-events: none; }
 
     .color-mode-btn {
       font-size: 11px; padding: 3px 8px;
@@ -1300,7 +1301,8 @@ footer {
   <div class="tb-group" title="Text color">
     <span class="tb-label">Color</span>
     <div id="color-picker-wrap">
-      <div id="color-swatch" title="Edit hex colour"></div>
+      <button type="button" id="color-swatch" title="Choose colour" aria-label="Open colour picker"></button>
+      <input type="color" id="color-native-picker" value="#e05c94" aria-label="Choose text or highlight colour" tabindex="-1">
       <input type="text" id="color-input" value="#e05c94" placeholder="#e05c94" aria-label="Text or highlight hex colour" title="Enter a 3- or 6-digit hex colour, such as #f9a or #e05c94" spellcheck="false" autocomplete="off" autocapitalize="off">
     </div>
     <button class="color-mode-btn active" id="btn-text-color" title="Text color" aria-label="Text color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19 12 5l6 14"></path><path d="M8.5 14h7"></path></svg></button>
@@ -4025,6 +4027,7 @@ const previewFrame = document.getElementById('preview-frame');
 const statusEl     = document.getElementById('status');
 const colorSwatch  = document.getElementById('color-swatch');
 const colorInput   = document.getElementById('color-input');
+const colorNativePicker = document.getElementById('color-native-picker');
 const fontSizeDisp = document.getElementById('font-size-display');
 const classSearch  = document.getElementById('class-search');
 const classListEl  = document.getElementById('class-list');
@@ -5500,12 +5503,23 @@ document.getElementById('align-center').addEventListener('click', () => applyAli
 document.getElementById('align-right').addEventListener('click',  () => applyAlign('right'));
 
 
-colorSwatch.addEventListener('click', () => { colorInput.focus(); colorInput.select(); });
+colorSwatch.addEventListener('click', () => {
+  const hex = normalizePaletteHex(colorInput.value);
+  if (hex) colorNativePicker.value = hex;
+  colorNativePicker.click();
+});
+colorNativePicker.addEventListener('input', () => {
+  colorInput.value = colorNativePicker.value;
+  colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+});
 colorInput.addEventListener('input', () => {
   const hex = normalizePaletteHex(colorInput.value);
   colorInput.setAttribute('aria-invalid', String(!hex));
   colorInput.setCustomValidity(hex ? '' : 'Enter a valid 3- or 6-digit hex colour.');
-  if (hex) colorSwatch.style.background = hex;
+  if (hex) {
+    colorSwatch.style.background = hex;
+    colorNativePicker.value = hex;
+  }
 });
 colorInput.addEventListener('blur', () => {
   const hex = normalizePaletteHex(colorInput.value);
