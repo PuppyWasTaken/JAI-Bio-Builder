@@ -706,6 +706,72 @@ footer {
       --ui-logo-stroke: #ecf7ef;
     }
 
+	body[data-theme="charcoal"] {
+	  color-scheme: dark;
+	  --ui-bg: #141414;
+	  --ui-surface: #202020;
+	  --ui-surface-2: #2b2b2b;
+	  --ui-surface-3: #333333;
+	  --ui-surface-hover: #404040;
+	  --ui-panel: #1b1b1b;
+	  --ui-input: #111111;
+	  --ui-border: #333333;
+	  --ui-border-strong: #404040;
+	  --ui-text: #e6e6e6;
+	  --ui-muted: #a3a3a3;
+	  --ui-dim: #777777;
+	  --ui-accent: #a3a3a3;
+	  --ui-accent-strong: #404040;
+	  --ui-shadow: rgba(163,163,163,.15);
+	  --ui-modal: rgba(0,0,0,.8);
+	  --ui-logo-bg: #333333;
+	  --ui-logo-stroke: #e6e6e6;
+	}
+
+    body[data-theme="synthwave"] {
+      color-scheme: dark;
+      --ui-bg: #100b1f;
+      --ui-surface: #18112c;
+      --ui-surface-2: #211336;
+      --ui-surface-3: #2c1b45;
+      --ui-surface-hover: #3d245c;
+      --ui-panel: #1c1230;
+      --ui-input: #100b1f;
+      --ui-border: #44265c;
+      --ui-border-strong: #713b88;
+      --ui-text: #f7eaff;
+      --ui-muted: #d0b8e7;
+      --ui-dim: #9d7db7;
+      --ui-accent: #ff5bc8;
+      --ui-accent-strong: #84349c;
+      --ui-shadow: rgba(255,91,200,.25);
+      --ui-modal: rgba(7,3,18,.86);
+      --ui-logo-bg: #2c1b45;
+      --ui-logo-stroke: #f7eaff;
+    }
+
+    body[data-theme="pastel-cute"] {
+      color-scheme: light;
+      --ui-bg: #fff7fb;
+      --ui-surface: #ffeaf3;
+      --ui-surface-2: #e8f5ff;
+      --ui-surface-3: #fff0f7;
+      --ui-surface-hover: #ffe0ed;
+      --ui-panel: #fffafd;
+      --ui-input: #ffffff;
+      --ui-border: #f3c9dc;
+      --ui-border-strong: #e8aac7;
+      --ui-text: #59485a;
+      --ui-muted: #866f88;
+      --ui-dim: #ab91ac;
+      --ui-accent: #cc6f9e;
+      --ui-accent-strong: #b95789;
+      --ui-shadow: rgba(204,111,158,.18);
+      --ui-modal: rgba(75,49,75,.36);
+      --ui-logo-bg: #ffeaf3;
+      --ui-logo-stroke: #59485a;
+    }
+
     body[data-theme="retro"] {
       color-scheme: light;
       --ui-bg: #fcf1ce;
@@ -1215,13 +1281,21 @@ footer {
     }
     #palette-toggle { width: auto; padding: 0 9px; gap: 6px; font-size: 11px; }
     #palette-panel {
-      position: fixed; z-index: 100; right: 12px; width: 350px;
-      max-width: calc(100vw - 24px); max-height: calc(100dvh - 140px);
-      overflow-y: auto; padding: 14px; border: 1px solid var(--ui-border-strong);
+      position: fixed; z-index: 100; left: auto; right: 12px; top: 120px; width: 350px;
+      max-width: calc(100vw - 16px); max-height: calc(100dvh - 24px);
+      overflow-y: auto; overscroll-behavior: contain; padding: 14px; border: 1px solid var(--ui-border-strong);
       border-radius: 10px; background: var(--ui-panel); color: var(--ui-text);
       box-shadow: 0 12px 36px rgba(0,0,0,.3); font-size: 12px;
     }
     #palette-panel[hidden] { display: none; }
+    #palette-drag-handle {
+      cursor: grab; touch-action: none; user-select: none;
+      padding: 4px; margin: -4px -4px 10px; border-radius: 6px;
+    }
+    #palette-drag-handle:active, #palette-panel.is-dragging #palette-drag-handle { cursor: grabbing; }
+    #palette-drag-handle h2 { pointer-events: none; }
+    #palette-drag-handle button { cursor: pointer; touch-action: manipulation; }
+    #palette-panel.is-dragging { user-select: none; }
     .palette-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
     .palette-row > input:not([type="color"]), .palette-row > select { flex: 1; min-width: 0; }
     #palette-panel h2 { flex: 1; font-size: 13px; color: var(--ui-accent); }
@@ -1275,6 +1349,9 @@ footer {
         <option value="green-pink">Light • Green + Pink</option>
         <option value="retro">Light • Retro</option>
         <option value="forest">Dark • Forest Green</option>
+        <option value="charcoal">Dark • Charcoal Gray</option>
+        <option value="synthwave">Dark • Synthwave</option>
+        <option value="pastel-cute">Light • Pastel Cute</option>
       </select>
     </label>
     <button id="disclaimer-btn" title="Disclaimer / Info" aria-label="Disclaimer / Info">
@@ -1332,7 +1409,7 @@ footer {
 </div>
 
 <section id="palette-panel" aria-labelledby="palette-heading" hidden>
-  <div class="palette-row">
+  <div class="palette-row" id="palette-drag-handle" title="Drag to move the palette window">
     <h2 id="palette-heading">Saved palettes</h2>
     <button id="palette-close" type="button" aria-label="Close palettes">×</button>
   </div>
@@ -5501,7 +5578,7 @@ const classPanel   = document.getElementById('class-panel');
 
 const THEME_KEY = 'jaiBioBuilder_theme';
 const themeSelect = document.getElementById('theme-select');
-const BUILDER_THEMES = new Set(['brown', 'midnight', 'cream', 'white', 'green-pink', 'retro', 'forest']);
+const BUILDER_THEMES = new Set(['brown', 'midnight', 'cream', 'white', 'green-pink', 'retro', 'forest', 'charcoal', 'synthwave', 'pastel-cute']);
 
 function applyTheme(theme, persist = true) {
   const nextTheme = BUILDER_THEMES.has(theme) ? theme : 'brown';
@@ -7541,11 +7618,63 @@ function renderPalettes() {
     paletteGrid.appendChild(cell);
   });
 }
-function positionPalettePanel() {
-  const top = document.getElementById('toolbar').getBoundingClientRect().bottom + 8;
-  palettePanel.style.top = top + 'px';
-  palettePanel.style.maxHeight = Math.max(100, window.innerHeight - top - 12) + 'px';
+let palettePosition = null;
+let paletteDrag = null;
+const paletteDragHandle = document.getElementById('palette-drag-handle');
+
+function setPalettePosition(left, top) {
+  const margin = 8;
+  const panelWidth = palettePanel.offsetWidth || 350;
+  const panelHeight = palettePanel.offsetHeight || 320;
+  const maxLeft = Math.max(margin, window.innerWidth - panelWidth - margin);
+  const maxTop = Math.max(margin, window.innerHeight - panelHeight - margin);
+  const clampedLeft = Math.min(Math.max(margin, left), maxLeft);
+  const clampedTop = Math.min(Math.max(margin, top), maxTop);
+  palettePanel.style.left = clampedLeft + 'px';
+  palettePanel.style.right = 'auto';
+  palettePanel.style.top = clampedTop + 'px';
+  palettePosition = { left: clampedLeft, top: clampedTop };
 }
+
+function positionPalettePanel() {
+  if (palettePanel.hidden) return;
+  palettePanel.style.maxHeight = Math.max(120, window.innerHeight - 24) + 'px';
+  if (palettePosition) {
+    setPalettePosition(palettePosition.left, palettePosition.top);
+    return;
+  }
+  const toolbarBottom = document.getElementById('toolbar').getBoundingClientRect().bottom;
+  const panelWidth = palettePanel.offsetWidth || 350;
+  setPalettePosition(window.innerWidth - panelWidth - 12, toolbarBottom + 8);
+}
+
+paletteDragHandle.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || e.target.closest('button, input, select, textarea, a')) return;
+  const rect = palettePanel.getBoundingClientRect();
+  paletteDrag = {
+    pointerId: e.pointerId,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top
+  };
+  palettePanel.classList.add('is-dragging');
+  paletteDragHandle.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+
+paletteDragHandle.addEventListener('pointermove', e => {
+  if (!paletteDrag || e.pointerId !== paletteDrag.pointerId) return;
+  setPalettePosition(e.clientX - paletteDrag.offsetX, e.clientY - paletteDrag.offsetY);
+});
+
+function stopPaletteDragging(e) {
+  if (!paletteDrag || (e && e.pointerId !== paletteDrag.pointerId)) return;
+  paletteDrag = null;
+  palettePanel.classList.remove('is-dragging');
+}
+paletteDragHandle.addEventListener('pointerup', stopPaletteDragging);
+paletteDragHandle.addEventListener('pointercancel', stopPaletteDragging);
+paletteDragHandle.addEventListener('lostpointercapture', stopPaletteDragging);
+
 function closePalettePanel() {
   palettePanel.hidden = true;
   paletteToggle.setAttribute('aria-expanded', 'false');
@@ -7564,7 +7693,9 @@ document.getElementById('palette-close').addEventListener('click', closePaletteP
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !palettePanel.hidden) { e.preventDefault(); closePalettePanel(); }
 });
-window.addEventListener('resize', positionPalettePanel);
+window.addEventListener('resize', () => {
+  if (!palettePanel.hidden) positionPalettePanel();
+});
 // Keep the editor range when touching/clicking buttons; inputs remain freely editable.
 [palettePanel, paletteToggle].forEach(el => el.addEventListener('mousedown', e => {
   if (e.target.closest('button')) e.preventDefault();
