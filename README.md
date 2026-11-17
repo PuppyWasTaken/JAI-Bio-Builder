@@ -11,7 +11,7 @@ Classes were imported from the source files on the JanitorAI site. Some classes 
 Bug reports and feature requests can be submitted here: https://forms.gle/kJ8npmWrx2aBzVx77
 
 Thanks:
-- Ace (@aceeenvw) - Suggestions (lightmode/themes, preview sample text, resizable windows, compact toolbar) & Bug Fixes
+- Ace (@aceeenvw) - Suggestions (lightmode/themes, preview sample text, resizable windows, compact toolbar, HTML Jump button) & Bug Fixes
 - Jiggy, Nini - Suggestions (Favouriting classes)
 - Harper - Suggestions (Autosave draft)
 - Decou - Suggestions (preview background customizer)
