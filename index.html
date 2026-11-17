@@ -314,6 +314,21 @@ img {
     }
     #class-search::placeholder { color: #6a6a5a; }
 
+    .class-filters {
+      display: flex; gap: 8px; padding: 8px 10px; flex-shrink: 0;
+      border-bottom: 1px solid var(--ui-border); background: var(--ui-surface);
+    }
+    .class-filters label {
+      flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;
+      font-size: 10px; color: var(--ui-muted);
+    }
+    .class-filters select {
+      width: 100%; min-width: 0; padding: 5px 6px; font-size: 11px;
+      border: 1px solid var(--ui-border-strong); border-radius: 5px;
+      background: var(--ui-surface-3); color: var(--ui-text); cursor: pointer;
+    }
+    .class-filters select:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 1px; }
+
     #panel-tabs {
       display: flex; flex-shrink: 0;
       border-bottom: 1px solid #2e2a1a;
@@ -1320,6 +1335,36 @@ footer {
     #palette-panel input[type="color"] { width: 34px; height: 30px; padding: 2px; cursor: pointer; }
     #palette-message { min-height: 32px; margin-top: 8px; overflow-wrap: anywhere; }
     #palette-count { margin-left: auto; color: var(--ui-muted); font-size: 11px; }
+    /* Numbered, non-wrapping source editor. The highlight layer never changes the HTML. */
+    #html-pane > .pane-label { flex-wrap: wrap; gap: 6px; }
+    .html-output-actions { flex-wrap: wrap; }
+    #jump-section-btn, #autocomplete-html-btn {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px;
+      border: 1px solid var(--ui-border-strong); background: var(--ui-surface-3);
+      color: var(--ui-text); cursor: pointer; white-space: nowrap;
+    }
+    #jump-section-btn:hover, #autocomplete-html-btn:hover { background: var(--ui-surface-hover); border-color: var(--ui-accent); }
+    #autocomplete-html-btn[aria-pressed="true"] { color: var(--ui-accent); border-color: var(--ui-accent); }
+    #jump-section-btn:focus-visible, #autocomplete-html-btn:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+    #source-shell { display: flex; flex: 1; min-height: 0; overflow: hidden; background: var(--ui-bg); }
+    #source-gutter {
+      flex: 0 0 auto; min-width: 38px; padding: 14px 8px 32px; overflow: hidden;
+      background: var(--ui-surface); color: var(--ui-dim); border-right: 1px solid var(--ui-border);
+      font: 11px/18px 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      text-align: right; user-select: none;
+    }
+    #source-gutter > div { height: 18px; }
+    #source-gutter .linked-line { color: var(--ui-accent); font-weight: bold; background: var(--ui-shadow); }
+    #source-viewport { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+    #source-editor {
+      position: relative; display: block; height: 100%; margin: 0; min-height: 0;
+      background: transparent; white-space: pre; overflow: auto; tab-size: 2; line-height: 18px;
+    }
+    #source-line-highlight {
+      position: absolute; left: 0; right: 0; pointer-events: none;
+      background: var(--ui-shadow); border-left: 2px solid var(--ui-accent);
+    }
+    #source-line-highlight[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -1463,11 +1508,19 @@ footer {
         HTML Output <span style="font-size:9px;color:#75845c;font-weight:400;text-transform:none;letter-spacing:0">(editable)</span>
         <span class="html-output-actions">
           <button id="beautify-html-btn" type="button" class="active" aria-pressed="true" title="Indent and space out the HTML output (doesn't change how it renders)">Beautify</button>
+          <button id="jump-section-btn" type="button" title="Select text or place the caret in Edit, then jump to its HTML">Jump to Section</button>
+          <button id="autocomplete-html-btn" type="button" aria-pressed="true" title="Automatically insert closing HTML tags while typing">Auto-close: On</button>
           <button id="copy-html-btn">Copy</button>
           <button id="download-html-btn" title="Download HTML output">Download</button>
         </span>
       </div>
-      <textarea id="source-editor" spellcheck="false"></textarea>
+      <div id="source-shell">
+        <div id="source-gutter" aria-hidden="true"></div>
+        <div id="source-viewport">
+          <div id="source-line-highlight" hidden></div>
+          <textarea id="source-editor" spellcheck="false" wrap="off" aria-label="Editable HTML source"></textarea>
+        </div>
+      </div>
     </div>
 
     <div id="preview-pane">
@@ -1514,6 +1567,34 @@ footer {
       <button id="refresh-btn">↺ Reload</button>
     </div>
     <input id="class-search" type="text" placeholder="Search classes or properties...">
+    <div class="class-filters">
+      <label for="class-category">Filter by category
+        <select id="class-category">
+          <option value="all">All categories</option>
+          <option value="hover">Hover state (:hover)</option>
+          <option value="animation">Animation</option>
+          <option value="background">Background</option>
+          <option value="border">Border &amp; outline</option>
+          <option value="color">Text color</option>
+          <option value="font-family">Font family</option>
+          <option value="typography">Typography</option>
+          <option value="layout">Layout &amp; positioning</option>
+          <option value="spacing">Spacing</option>
+          <option value="sizing">Width &amp; height</option>
+          <option value="effects">Shadows &amp; effects</option>
+          <option value="transform">Transforms</option>
+          <option value="transition">Transitions</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label for="class-sort">Sort by
+        <select id="class-sort">
+          <option value="source">Stylesheet order</option>
+          <option value="asc">Class name A–Z</option>
+          <option value="desc">Class name Z–A</option>
+        </select>
+      </label>
+    </div>
     <div class="sample-controls">
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
         <label for="sample-text">Sample text</label>
@@ -1649,9 +1730,8 @@ const CSS_URL = 'https://raw.githubusercontent.com/PuppyWasTaken/JAI-Bio-Builder
 
 
 const BUNDLED_CSS = `/* Compiled site classes from JAI Page Sources */
-/* Nov 12 2026 - consolidated from jai_css_sources_12112026, A-Z, fully styled elements first */
+/* Nov 12 2026 */
 /* Imported by Puppy */
-/* Omitted: position:absolute/fixed rules, html/body rules and any @media/@supports containing html/body rules */
 @charset "UTF-8";
 @import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Dancing+Script:wght@400..700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Jura:wght@300..700&family=Lexend:wght@100..900&family=Monoton&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Press+Start+2P&family=Rock+Salt&family=VT323&display=swap');
 
@@ -5571,6 +5651,8 @@ const colorInput   = document.getElementById('color-input');
 const colorNativePicker = document.getElementById('color-native-picker');
 const fontSizeDisp = document.getElementById('font-size-display');
 const classSearch  = document.getElementById('class-search');
+const classCategory = document.getElementById('class-category');
+const classSort     = document.getElementById('class-sort');
 const classListEl  = document.getElementById('class-list');
 const panelStatus  = document.getElementById('panel-status-text');
 const classPanel   = document.getElementById('class-panel');
@@ -5621,9 +5703,9 @@ const pageInfoEl     = document.getElementById('page-info');
 const pagePrevBtn    = document.getElementById('page-prev');
 const pageNextBtn    = document.getElementById('page-next');
 const pageSizeSelect = document.getElementById('page-size-select');
-let pageSize        = parseInt(pageSizeSelect.value, 10); // classes rendered (iframes created) per page
+let pageSize        = parseInt(pageSizeSelect.value, 10); 
 let currentPage      = 1;
-let filteredClasses  = []; // whatever the search currently matches; paginate over this
+let filteredClasses  = []; 
 
 let savedRange = null;
 let colorMode  = 'text';
@@ -5647,10 +5729,6 @@ function toggleFavorite(name) {
   saveFavorites();
   updateFavCount();
 
-  // In the normal "All Classes" view, changing a favorite does not change
-  // the displayed class set. Update the clicked star in place instead of
-  // rebuilding the entire list (which resets scroll position and reloads
-  // all preview iframes, causing the menu to visibly jump).
   if (activeTab === 'all') {
     classListEl.querySelectorAll('.fav-btn').forEach(btn => {
       if (btn.dataset.className !== name) return;
@@ -5662,8 +5740,6 @@ function toggleFavorite(name) {
     return;
   }
 
-  // The Favorites tab really does need its list contents updated. Preserve
-  // the current scroll position across that intentional re-render.
   const scrollTop = classListEl.scrollTop;
   recomputeFilteredClasses();
   renderPage();
@@ -5672,7 +5748,8 @@ function toggleFavorite(name) {
 }
 function updateFavCount() {
   const el = document.getElementById('fav-count');
-  if (el) el.textContent = `(${favClasses.size})`;
+  const count = allClasses.filter(c => favClasses.has(c.name)).length;
+  if (el) el.textContent = `(${count})`;
 }
 function getBaseClasses() {
   return activeTab === 'favorites'
@@ -5680,11 +5757,16 @@ function getBaseClasses() {
     : allClasses;
 }
 function recomputeFilteredClasses() {
-  const q = classSearch.value.toLowerCase();
+  const q = classSearch.value.trim().toLowerCase();
   const base = getBaseClasses();
-  filteredClasses = q ? base.filter(c =>
-    c.nameLower.includes(q) || c.cssLower.includes(q)
-  ) : base;
+  filteredClasses = base.filter(c =>
+    (classCategory.value === 'all' || c.categories.has(classCategory.value)) &&
+    (!q || c.nameLower.includes(q) || c.cssLower.includes(q))
+  );
+  if (classSort.value !== 'source') {
+    const direction = classSort.value === 'desc' ? -1 : 1;
+    filteredClasses.sort((a, b) => direction * a.name.localeCompare(b.name, undefined, { numeric: true }));
+  }
 }
 function applyTabFilter() {
 
@@ -6569,8 +6651,6 @@ function sanitizeHTML(html) {
         continue;
       }
       visit(el);
-      // <div> gets stripped by the site, so never keep one: a div that only holds inline content
-      // becomes a <p> (attributes kept); a div that wraps other blocks is simply unwrapped.
       if (tag === 'div') {
         if (el.querySelector(blockSel)) {
           el.replaceWith(...el.childNodes);
@@ -6597,8 +6677,6 @@ function sanitizeHTML(html) {
   return template.innerHTML;
 }
 
-/* The site stylesheet is ~370 KB and gets embedded in every preview document, so only
-   rebuild the combined string when rawCSS actually changes (not once per iframe). */
 let _docCSSSource = null, _docCSS = '';
 function getDocCSS() {
   if (_docCSSSource !== rawCSS) {
@@ -6607,7 +6685,7 @@ function getDocCSS() {
       importLines.push(match.trim());
       return '';
     });
-    // ROOT_VARS is the single :root; drop the stylesheet's own copy so ~800 variables aren't embedded twice per preview.
+
     const noRootCSS = cleanCSS.replace(/:root\s*\{[^}]*\}/, '');
     _docCSS = importLines.join('\n') + '\n' + ROOT_VARS + '\n' + noRootCSS;
     _docCSSSource = rawCSS;
@@ -6618,8 +6696,7 @@ function getDocCSS() {
 function buildDoc(bodyHTML, bodyCSS) {
   const fullCSS = getDocCSS();
   const canvasCSS = `html,body{margin:0;width:100%;min-height:100%;}html{background:${previewBg};background-repeat:no-repeat;background-size:100% 100%;}body{width:auto;max-width:100%;min-width:0;min-height:100vh;background:${previewBg};background-repeat:no-repeat;background-size:100% 100%;}`;
-  // Inline background on <html> so the very first paint already has the right colour,
-  // even while the (large) stylesheet below is still being parsed.
+
   const htmlBg = String(previewBg).replace(/"/g, '&quot;');
   return `<!DOCTYPE html><html style="background:${htmlBg}"><head><meta charset="UTF-8"><style>${fullCSS}</style><style>${canvasCSS}body{${bodyCSS || ''}}img{max-width:100%;}</style></head><body>${bodyHTML}</body></html>`;
 }
@@ -6775,12 +6852,6 @@ for (const axis of ['column', 'row']) {
   handle.addEventListener('dblclick', () => { setRatio(55); saveLayout(); });
 }
 
-/* ---------- HTML output beautifier ----------
-   Pretty-prints the HTML output (indentation + blank lines between blocks/links).
-   Only whitespace that is already collapsible is touched, so the rendered result is unchanged:
-   - blocks (<p>, <div>, lists, headings, etc.) and links sitting between blocks go on their own lines
-   - long inline content is wrapped only where a space already existed
-   - <pre> content and inline elements' insides are never modified */
 const BEAUTIFY_KEY = 'jaiBioBuilder_beautify';
 let beautifyOutput = true;
 try { if (localStorage.getItem(BEAUTIFY_KEY) === '0') beautifyOutput = false; } catch (e) {}
@@ -6821,8 +6892,6 @@ function tokenizeRun(nodes) {
   return tokens;
 }
 
-// A single <br> at the very end of a block adds nothing visible (browsers collapse it), so it is
-// left out of the output; two in a row (a deliberate blank line) are kept.
 function dropTrailingBr(tokens) {
   const n = tokens.length;
   if (n > 1 && tokens[n - 1].br && !tokens[n - 2].br) tokens.pop();
@@ -6830,8 +6899,7 @@ function dropTrailingBr(tokens) {
 }
 
 function layoutTokens(tokens, pad) {
-  // When a run mixes text and links, each link sits on its own line, indented one level deeper than
-  // the text. A break is only made where whitespace already existed, so nothing changes visually.
+
   const mixed = tokens.some(t => !t.link && !t.br);
   const linkPad = mixed ? pad + BEAUTIFY_INDENT : pad;
   const lines = [];
@@ -6905,8 +6973,6 @@ function beautifyHTML(html) {
   return formatChildren(tpl.content, 0).join('\n');
 }
 
-/* Reverse of beautifyHTML: strips the layout whitespace again before HTML typed/pasted into the
-   output box is loaded back into the editor (which uses white-space: pre-wrap). */
 function compactContainer(parent, blockContext) {
   const kids = [...parent.childNodes];
   for (const n of kids) {
@@ -6944,29 +7010,24 @@ function sourceToEditorHTML() {
 }
 
 function syncOutput() {
-  // Don't stomp on the textarea's own value while the user is actively
-  // typing in it — re-serializing the DOM mid-edit resets the cursor and
-  // can re-escape a stray "<"/">" into "&lt;"/"&gt;" before the tag is
-  // even finished being typed. Only re-sync it when it's not the active
-  // element (e.g. changes made from the rich editor or toolbar).
   if (document.activeElement !== sourceEditor) {
     sourceEditor.value = getOutputHTML();
   }
+  refreshSourceLines();
+  queueLinkedHighlight();
   updatePreview();
 
   saveDraft();
 }
 
-// Pressing Enter in the editor should start a new <p>, not a <div> (the site strips <div>).
+
 function useParagraphSeparator() {
   try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
 }
 useParagraphSeparator();
 richEditor.addEventListener('focus', useParagraphSeparator);
 
-// Shift+Enter inserts a real <br> inside the current <p>; plain Enter starts a new <p>.
-// (Done by hand: in this white-space:pre-wrap editor the browser's own line break is a "\n"
-// character, which is not an HTML line break and would be lost in the HTML output.)
+
 function insertLineBreak() {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
@@ -6975,8 +7036,7 @@ function insertLineBreak() {
   range.deleteContents();
   const br = document.createElement('br');
   range.insertNode(br);
-  // A <br> with nothing after it in its block is collapsed by browsers, so add a placeholder <br>
-  // to make the new empty line visible (and give the caret somewhere to sit).
+
   let block = br.parentNode;
   while (block !== richEditor && !/^(P|DIV|LI|H[1-6]|BLOCKQUOTE|PRE)$/.test(block.nodeName)) block = block.parentNode;
   const after = document.createRange();
@@ -6998,7 +7058,7 @@ richEditor.addEventListener('keydown', e => {
   insertLineBreak();
 });
 
-// Text typed straight into the editor root (no <p> around it) gets wrapped in a <p> right away.
+
 let _ensuringP = false;
 function ensureParagraphs() {
   if (_ensuringP) return;
@@ -7014,8 +7074,7 @@ function ensureParagraphs() {
   _ensuringP = false;
 }
 
-// Tidy content loaded into the editor (saved drafts etc.): "\n" characters become <br>, and loose
-// root-level text is wrapped in <p>.
+
 function normalizeEditorContent() {
   const walker = document.createTreeWalker(richEditor, NodeFilter.SHOW_TEXT);
   const texts = [];
@@ -7068,6 +7127,9 @@ richEditor.addEventListener('paste', e => {
 
 let _htmlEditTimer = null;
 sourceEditor.addEventListener('input', () => {
+  linkedEditorRange = null;
+  paintLinkedLines(null);
+  refreshSourceLines();
   clearTimeout(_htmlEditTimer);
   _htmlEditTimer = setTimeout(() => {
 
@@ -7090,7 +7152,7 @@ sourceEditor.addEventListener('blur', () => {
   }
 });
 
-sourceEditor.addEventListener('focus', () => {
+sourceEditor.addEventListener('input', () => {
   sourceEditor.dataset.userEdited = '1';
 });
 
@@ -7121,7 +7183,217 @@ beautifyBtn.addEventListener('click', () => {
   try { localStorage.setItem(BEAUTIFY_KEY, beautifyOutput ? '1' : '0'); } catch (e) {}
   refreshBeautifyBtn();
   sourceEditor.value = getOutputHTML();
+  refreshSourceLines();
+  updateLinkedHighlight();
   statusEl.textContent = beautifyOutput ? 'HTML output beautified' : 'HTML output set to compact';
+});
+
+
+const sourceGutter = document.getElementById('source-gutter');
+const sourceLineHighlight = document.getElementById('source-line-highlight');
+const jumpSectionBtn = document.getElementById('jump-section-btn');
+const autocompleteHtmlBtn = document.getElementById('autocomplete-html-btn');
+const AUTO_CLOSE_KEY = 'jaiBioBuilder_autoCloseTags';
+const SOURCE_VOID_TAGS = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+let linkedEditorRange = null;
+let linkedSourceLines = null;
+let sourceLineCount = 0;
+let linkedHighlightQueued = false;
+let autoCloseTags = true;
+try { autoCloseTags = localStorage.getItem(AUTO_CLOSE_KEY) !== '0'; } catch (e) {}
+
+function refreshSourceLines() {
+  const count = sourceEditor.value.split('\n').length;
+  if (count !== sourceLineCount) {
+    sourceLineCount = count;
+    const lines = document.createDocumentFragment();
+    for (let i = 1; i <= count; i++) {
+      const line = document.createElement('div');
+      line.textContent = i;
+      lines.append(line);
+    }
+    sourceGutter.replaceChildren(lines);
+    sourceGutter.style.minWidth = Math.max(38, String(count).length * 7 + 16) + 'px';
+  }
+  paintLinkedLines(linkedSourceLines);
+}
+
+function paintLinkedLines(lines) {
+  linkedSourceLines = lines;
+  sourceLineHighlight.hidden = !lines;
+  sourceGutter.querySelectorAll('.linked-line').forEach(line => line.classList.remove('linked-line'));
+  if (lines) {
+    const lineHeight = parseFloat(getComputedStyle(sourceEditor).lineHeight);
+    sourceLineHighlight.style.top = (14 + lines.first * lineHeight - sourceEditor.scrollTop) + 'px';
+    sourceLineHighlight.style.height = ((lines.last - lines.first + 1) * lineHeight) + 'px';
+    for (let i = lines.first; i <= lines.last; i++) sourceGutter.children[i]?.classList.add('linked-line');
+  }
+  sourceGutter.scrollTop = sourceEditor.scrollTop;
+}
+
+sourceEditor.addEventListener('scroll', () => paintLinkedLines(linkedSourceLines));
+
+function indexSourceHTML(html) {
+  const elements = [], characters = [], stack = [];
+  let rawOpen = false;
+  const decoder = document.createElement('textarea');
+  const token = /<!--[\s\S]*?(?:-->|$)|<![^>]*>|<\/?[a-zA-Z][\w:.-]*(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+  function addText(start, end) {
+    for (let i = start; i < end;) {
+      const entity = html[i] === '&' && html.slice(i, end).match(/^&(?:#x[\da-f]+|#\d+|[a-z][\da-z]+);/i);
+      const raw = entity ? entity[0] : html[i];
+      let text = raw;
+      if (entity) { decoder.innerHTML = raw; text = decoder.value; }
+      for (let j = 0; j < text.length; j++) {
+        if (!/\s/.test(text[j])) characters.push({ start: i, end: i + raw.length });
+      }
+      i += raw.length;
+    }
+  }
+  let cursor = 0, match;
+  while ((match = token.exec(html))) {
+    addText(cursor, match.index);
+    const text = match[0], name = text.match(/^<\/?([\w:.-]+)/)?.[1].toLowerCase();
+    cursor = token.lastIndex;
+    if (!name) continue;
+    if (text.startsWith('</')) {
+      const index = stack.map(el => el.tag).lastIndexOf(name);
+      if (index !== -1) {
+        for (const el of stack.splice(index)) el.end = cursor;
+      }
+    } else {
+      const el = { tag: name, start: match.index, end: cursor };
+      elements.push(el);
+      if (!SOURCE_VOID_TAGS.has(name) && !/\/\s*>$/.test(text)) {
+        stack.push(el);
+        // Raw-text elements may contain angle brackets that are not HTML tags.
+        if (/^(script|style|textarea|title)$/.test(name)) {
+          const close = new RegExp('</' + name + '\\s*>', 'ig');
+          close.lastIndex = cursor;
+          const ending = close.exec(html);
+          rawOpen = !ending;
+          const end = ending ? ending.index : html.length;
+          addText(cursor, end);
+          el.end = ending ? close.lastIndex : html.length;
+          stack.pop();
+          cursor = token.lastIndex = el.end;
+        }
+      }
+    }
+  }
+  addText(cursor, html.length);
+  stack.forEach(el => { el.end = html.length; });
+  return { elements, characters, rawOpen, tailStart: cursor };
+}
+
+function sourceRangeForEditorRange(range) {
+  if (!range || !richEditor.contains(range.startContainer) || !richEditor.contains(range.endContainer)) return null;
+  const html = sourceEditor.value;
+  const index = indexSourceHTML(html);
+
+  if (range.collapsed || !range.toString().replace(/\s/g, '')) {
+    let el = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+    if (el === richEditor) el = richEditor.childNodes[range.startOffset] || richEditor.lastChild;
+    if (el?.nodeType !== 1) el = el?.parentElement;
+    const block = el?.closest('p,li,h1,h2,h3,h4,h5,h6,blockquote,pre');
+    if (block && richEditor.contains(block)) el = block;
+    const nodes = [...richEditor.querySelectorAll('*')];
+    const ordinal = nodes.filter(node => node.tagName === el?.tagName).indexOf(el);
+    const section = index.elements.filter(node => node.tag === el?.tagName.toLowerCase())[ordinal];
+    if (section) return { start: section.start, end: section.end };
+    return html ? { start: 0, end: html.length } : null;
+  }
+
+  const prefix = document.createRange();
+  prefix.selectNodeContents(richEditor);
+  prefix.setEnd(range.startContainer, range.startOffset);
+  const start = prefix.cloneContents().textContent.replace(/\s/g, '').length;
+  prefix.setEnd(range.endContainer, range.endOffset);
+  const end = prefix.cloneContents().textContent.replace(/\s/g, '').length;
+  if (!index.characters[start] || !index.characters[end - 1]) return null;
+  return { start: index.characters[start].start, end: index.characters[end - 1].end };
+}
+
+function updateLinkedHighlight() {
+  const mapped = sourceRangeForEditorRange(linkedEditorRange);
+  if (!mapped) { paintLinkedLines(null); return null; }
+  const html = sourceEditor.value;
+  paintLinkedLines({
+    first: html.slice(0, mapped.start).split('\n').length - 1,
+    last: html.slice(0, Math.max(mapped.start, mapped.end - 1)).split('\n').length - 1
+  });
+  return mapped;
+}
+
+function queueLinkedHighlight() {
+  if (linkedHighlightQueued) return;
+  linkedHighlightQueued = true;
+  queueMicrotask(() => {
+    linkedHighlightQueued = false;
+    updateLinkedHighlight();
+  });
+}
+
+document.addEventListener('selectionchange', () => {
+  if (document.activeElement === sourceEditor) return;
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (!richEditor.contains(range.commonAncestorContainer)) return;
+  linkedEditorRange = range.cloneRange();
+  queueLinkedHighlight();
+});
+
+
+jumpSectionBtn.addEventListener('mousedown', event => event.preventDefault());
+jumpSectionBtn.addEventListener('click', () => {
+  const mapped = updateLinkedHighlight();
+  if (!mapped) { statusEl.textContent = 'Select text or place the caret in Edit first.'; return; }
+  sourceEditor.focus({ preventScroll: true });
+  sourceEditor.setSelectionRange(mapped.start, mapped.end);
+  const lineHeight = parseFloat(getComputedStyle(sourceEditor).lineHeight);
+  sourceEditor.scrollTop = Math.max(0, 14 + linkedSourceLines.first * lineHeight - sourceEditor.clientHeight / 3);
+  sourceEditor.scrollLeft = 0;
+  paintLinkedLines(linkedSourceLines);
+  statusEl.textContent = 'HTML line ' + (linkedSourceLines.first + 1) +
+    (linkedSourceLines.last > linkedSourceLines.first ? '–' + (linkedSourceLines.last + 1) : '');
+});
+
+function refreshAutoCloseButton() {
+  autocompleteHtmlBtn.textContent = 'Auto-close: ' + (autoCloseTags ? 'On' : 'Off');
+  autocompleteHtmlBtn.setAttribute('aria-pressed', String(autoCloseTags));
+}
+autocompleteHtmlBtn.addEventListener('click', () => {
+  autoCloseTags = !autoCloseTags;
+  try { localStorage.setItem(AUTO_CLOSE_KEY, autoCloseTags ? '1' : '0'); } catch (e) {}
+  refreshAutoCloseButton();
+});
+refreshAutoCloseButton();
+
+sourceEditor.addEventListener('beforeinput', event => {
+  if (!autoCloseTags || event.isComposing || event.inputType !== 'insertText' || event.data !== '>' ||
+      sourceEditor.selectionStart !== sourceEditor.selectionEnd) return;
+  const pos = sourceEditor.selectionStart;
+  const before = sourceEditor.value.slice(0, pos);
+  const opening = before.match(/<([a-zA-Z][\w:.-]*)(?:[^<>"']|"[^"]*"|'[^']*')*$/);
+  if (!opening || /\/\s*$/.test(opening[0])) return;
+  const tag = opening[1], lower = tag.toLowerCase();
+  if (SOURCE_VOID_TAGS.has(lower)) return;
+  const preceding = before.slice(0, opening.index);
+  // Do not complete apparent tags inside comments or raw script/style content.
+  if (preceding.lastIndexOf('<!--') > preceding.lastIndexOf('-->')) return;
+  const context = indexSourceHTML(preceding);
+  if (context.rawOpen || /<\/?[a-zA-Z]/.test(preceding.slice(context.tailStart))) return;
+  const after = sourceEditor.value.slice(pos);
+  if (new RegExp('^\\s*</' + tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*>', 'i').test(after)) return;
+  event.preventDefault();
+  const insertion = '></' + tag + '>';
+  // execCommand preserves the textarea's native undo history as one edit.
+  if (!document.execCommand('insertText', false, insertion)) {
+    sourceEditor.setRangeText(insertion, pos, pos, 'end');
+    sourceEditor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  sourceEditor.setSelectionRange(pos + 1, pos + 1);
 });
 
 const downloadHtmlBtn = document.getElementById('download-html-btn');
@@ -7312,7 +7584,7 @@ function updateFontSizeDisplay() {
 function applyFontSizeFromInput() {
   const raw = fontSizeDisp.value.trim().replace(/px$/i, '');
   const px  = parseInt(raw, 10);
-  if (!px || px < 1) { updateFontSizeDisplay(); return; }   // invalid — revert display
+  if (!px || px < 1) { updateFontSizeDisplay(); return; }  
   const clamped = Math.max(8, Math.min(200, px));
   if (!restoreSelection()) { updateFontSizeDisplay(); return; }
   const sel = window.getSelection();
@@ -7500,7 +7772,7 @@ function applyCurrentColor() {
     statusEl.textContent = 'Select text in the editor first';
     return false;
   }
-  // Focus can move the live selection. Restore a clone of the saved range.
+
   const targetRange = savedRange.cloneRange();
   richEditor.focus();
   const sel = window.getSelection();
@@ -7523,7 +7795,7 @@ function applyCurrentColor() {
 }
 document.getElementById('apply-color-btn').addEventListener('click', applyCurrentColor);
 
-// Named palettes are stored separately from drafts, so clearing a draft keeps colours.
+
 const PALETTES_KEY = 'jaiBioBuilder_palettes_v1';
 const palettePanel = document.getElementById('palette-panel');
 const paletteToggle = document.getElementById('palette-toggle');
@@ -7696,7 +7968,7 @@ document.addEventListener('keydown', e => {
 window.addEventListener('resize', () => {
   if (!palettePanel.hidden) positionPalettePanel();
 });
-// Keep the editor range when touching/clicking buttons; inputs remain freely editable.
+
 [palettePanel, paletteToggle].forEach(el => el.addEventListener('mousedown', e => {
   if (e.target.closest('button')) e.preventDefault();
 }));
@@ -7787,7 +8059,7 @@ function scheduleUndoPush() {
 }
 
 function performUndo() {
-  pushUndo(); // capture any pending state first (also clears the debounce timer)
+  pushUndo(); 
   if (!undoStack.length) { statusEl.textContent = 'Nothing to undo'; return; }
   redoStack.push(richEditor.innerHTML);
   const prev = undoStack.pop();
@@ -7873,17 +8145,14 @@ function applyClass(className) {
     range.toString().trim() === block.textContent.trim();
 
   if (isWholeBlock) {
-    // Entire <p> selected — just stamp the class onto it
+
     block.classList.add(className);
     syncOutput(); saveSelection();
     statusEl.textContent = `Added class "${className}" to existing element`;
     return;
   }
 
-  // Partial selection: only <a> and <p> can carry classes (spans get
-  // stripped by the site's sanitizer). If we're already inside a <p>,
-  // wrap the selection in a new <a> (an inline "link-styled" span).
-  // Otherwise, wrap it in a new <p> instead of falling back to <a>.
+
   const extracted = range.extractContents();
   const wrapper = document.createElement(insideP ? 'a' : 'p');
   wrapper.className = className;
@@ -7908,6 +8177,8 @@ document.getElementById('panel-close').addEventListener('click',  () => classPan
 document.getElementById('refresh-btn').addEventListener('click',  loadCSS);
 
 classSearch.addEventListener('input', debouncedApplyTabFilter);
+classCategory.addEventListener('change', applyTabFilter);
+classSort.addEventListener('change', applyTabFilter);
 
 document.querySelectorAll('.panel-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -7933,9 +8204,7 @@ pageNextBtn.addEventListener('click', () => {
   if (currentPage < totalPages) { currentPage++; renderPage(); classListEl.scrollTop = 0; }
 });
 
-/* Renders only the slice of filteredClasses belonging to currentPage.
-   This is the key fix: only pageSize classes (default 50) ever get
-   built into the DOM / get an <iframe> at once, instead of all 700+. */
+
 function renderPage() {
   const totalItems  = filteredClasses.length;
   const totalPages  = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -7979,19 +8248,91 @@ function stripAtImports(cssText) {
     .replace(/@import\s*(?:url\(\s*(?:"[^"]*"|'[^']*'|[^)]*)\s*\)|"[^"]*"|'[^']*')[^;]*;/gi, '');
 }
 
-function parseCSSClassesFallback(cssText) {
+const CLASS_CATEGORIES = [
+  ['background', /^background(?:-|$)/],
+  ['border', /^(?:border|outline)(?:-|$)/],
+  ['color', /^(?:color|(?:-webkit-)?text-fill-color|(?:-webkit-)?text-stroke(?:-color)?)$/],
+  ['font-family', /^font(?:-family)?$/],
+  ['typography', /^(?:font(?:-|$)|line-height$|letter-spacing$|word-spacing$|text(?:-|$)|white-space$|word-break$|overflow-wrap$|hyphens$|list-style(?:-|$))/],
+  ['layout', /^(?:display$|position$|top$|right$|bottom$|left$|inset(?:-|$)|z-index$|float$|clear$|overflow(?:-|$)|flex(?:-|$)|grid(?:-|$)|align(?:-|$)|justify(?:-|$)|place(?:-|$)|order$|columns?$|column-(?:count|width|fill|span)$)/],
+  ['spacing', /^(?:margin|padding|gap|row-gap|column-gap)(?:-|$)/],
+  ['sizing', /^(?:(?:min-|max-)?(?:width|height|inline-size|block-size)|aspect-ratio|box-sizing)$/],
+  ['effects', /^(?:box-shadow|text-shadow|opacity|(?:-webkit-)?(?:backdrop-)?filter|mix-blend-mode|background-blend-mode|visibility|clip-path|(?:-webkit-)?mask(?:-.*)?)$/],
+  ['transform', /^(?:(?:-webkit-)?transform(?:-|$)|translate$|rotate$|scale$|perspective(?:-|$)|backface-visibility$)/],
+  ['transition', /^(?:-webkit-)?transition(?:-|$)/],
+];
 
-  const results = [], seen = new Set();
-  const re = /\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)\s*\{([^}]*)\}/g;
-  let m;
-  while ((m = re.exec(cssText)) !== null) {
-    const name = m[1], css = m[2].trim().replace(/\s+/g, ' ');
-    if (!seen.has(name)) {
-      seen.add(name);
-      results.push({ name, css, nameLower: name.toLowerCase(), cssLower: css.toLowerCase() });
+function hoverSelectorClasses(selector) {
+  const names = new Set();
+  let start = 0, depth = 0, bracket = 0, quote = '', hasHover = false;
+  for (let i = 0; i <= selector.length; i++) {
+    const char = selector[i];
+    if (char === '\\') { i++; continue; }
+    if (quote) { if (char === quote) quote = ''; continue; }
+    if (char === '"' || char === "'") { quote = char; continue; }
+    if (char === '[') bracket++;
+    if (char === ']') bracket--;
+    if (bracket) continue;
+    if (char === '(') depth++;
+    if (char === ')') depth--;
+    if (char === ':' && /^:hover(?![\w-])/i.test(selector.slice(i))) hasHover = true;
+    if (i === selector.length || (char === ',' && !depth)) {
+      if (hasHover) selectorClasses(selector.slice(start, i)).forEach(name => names.add(name));
+      start = i + 1;
+      hasHover = false;
     }
   }
-  return results;
+  return names;
+}
+
+function hasClassAnimation(style, keyframeNames) {
+  for (const prefix of ['', '-webkit-']) {
+    const shorthand = style.getPropertyValue(prefix + 'animation').trim();
+    const names = style.getPropertyValue(prefix + 'animation-name').split(',')
+      .map(name => name.trim().replace(/^(["'])(.*)\1$/, '$2'))
+      .filter(name => name && !/^(?:none|initial|inherit|unset|revert|revert-layer)$/i.test(name));
+    if (names.length && (shorthand || names.some(name => keyframeNames.has(name)))) return true;
+  }
+  return false;
+}
+
+function makeClassRecord(name, css, properties, hasHover = false, hasAnimation = false) {
+  const categories = new Set();
+  for (const [category, pattern] of CLASS_CATEGORIES) {
+    if ([...properties].some(property => pattern.test(property))) categories.add(category);
+  }
+  if (hasAnimation) categories.add('animation');
+  if (!categories.size) categories.add('other');
+  if (hasHover) categories.add('hover');
+  return { name, css, nameLower: name.toLowerCase(), cssLower: css.toLowerCase(), categories };
+}
+
+function parseCSSClassesFallback(cssText) {
+
+  const records = new Map();
+  const keyframeNames = new Set([...cssText.replace(/\/\*[\s\S]*?\*\//g, '')
+    .matchAll(/@(?:-webkit-)?keyframes\s+(?:"([^"]+)"|'([^']+)'|([^\s{]+))/gi)]
+    .map(match => match[1] || match[2] || match[3]));
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = re.exec(cssText)) !== null) {
+    const selector = m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim();
+    const css = m[2].trim().replace(/\s+/g, ' ');
+    const style = document.createElement('div').style;
+    style.cssText = css;
+    const hoverNames = hoverSelectorClasses(selector);
+    for (const name of selectorClasses(selector)) {
+      const record = makeClassRecord(name, `${selector} { ${css} }`, Array.from(style), hoverNames.has(name), hasClassAnimation(style, keyframeNames));
+      if (records.has(name)) {
+        const previous = records.get(name);
+        record.css = previous.css + ' ' + record.css;
+        record.cssLower = record.css.toLowerCase();
+        previous.categories.forEach(category => record.categories.add(category));
+      }
+      records.set(name, record);
+    }
+  }
+  return [...records.values()];
 }
 
 function parseCSSClasses(cssText) {
@@ -8003,17 +8344,34 @@ function parseCSSClasses(cssText) {
     return parseCSSClassesFallback(cssText);
   }
 
-  const classRules = new Map(); // name -> array of matching rule cssText
+  const classRules = new Map(); 
+  const classProperties = new Map(); 
+  const hoverClasses = new Set();
+  const animationClasses = new Set();
+  const keyframeNames = new Set();
+  function collectKeyframes(rules) {
+    for (const rule of rules) {
+      if (rule.type === CSSRule.KEYFRAMES_RULE) keyframeNames.add(rule.name);
+      else if (rule.cssRules) collectKeyframes(rule.cssRules);
+    }
+  }
+  collectKeyframes(sheet.cssRules);
 
   function walk(rules, context) {
     for (const rule of rules) {
       if (rule.selectorText) {
+        hoverSelectorClasses(rule.selectorText).forEach(name => hoverClasses.add(name));
         for (const name of selectorClasses(rule.selectorText)) {
-          if (!classRules.has(name)) classRules.set(name, []);
+          if (!classRules.has(name)) {
+            classRules.set(name, []);
+            classProperties.set(name, new Set());
+          }
+          if (rule.style) {
+            for (const property of Array.from(rule.style)) classProperties.get(name).add(property);
+            if (hasClassAnimation(rule.style, keyframeNames)) animationClasses.add(name);
+          }
           let text = rule.cssText;
           for (const group of [...context].reverse()) text = group + ' {\n' + text + '\n}';
-          // Keep every rule that mentions this class, instead of only the
-          // first one found — this is the fix for repeated/merged rules.
           classRules.get(name).push(text);
         }
       } else if (rule.cssRules && !rule.name) {
@@ -8030,29 +8388,15 @@ function parseCSSClasses(cssText) {
   const results = [];
   for (const [name, rules] of classRules) {
     const css = rules.join('\n').replace(/[ \t]+/g, ' ').replace(/\n\s*/g, ' ').trim();
-    results.push({ name, css, nameLower: name.toLowerCase(), cssLower: css.toLowerCase() });
+    results.push(makeClassRecord(name, css, classProperties.get(name), hoverClasses.has(name), animationClasses.has(name)));
   }
   return results;
 }
-
-
-/* ---- Class preview cards -------------------------------------------------------
-   Every card owns an <iframe> whose document embeds the whole site stylesheet, so
-   creating one is expensive and, until it has loaded and painted, it can flash.
-
-   To keep searching smooth:
-   1. Cards are cached by class name and reconciled against the new result list.
-      Cards that are still in the results are left untouched (an iframe reloads if it is
-      removed from / re-inserted into the DOM), only missing ones are built or dropped.
-   2. A brand-new iframe stays invisible (opacity:0 on a wrapper painted with the preview
-      background) until its document has loaded, then it is revealed.
-   3. Changing the sample text / tag swaps the <body> of already-loaded iframes in place
-      instead of navigating them again.                                                   */
 let classObserver = null;
-const classCardCache = new Map();  // class name -> { item, iframe } for cards currently in the DOM
-let cardCacheKey  = '';            // css version + preview bg; a change makes every card stale
-let cardSampleKey = '';            // sample tag + text; a change re-renders loaded cards in place
-let cssVersion    = 0;             // bumped whenever a new stylesheet is loaded
+const classCardCache = new Map();  
+let cardCacheKey  = '';          
+let cardSampleKey = '';        
+let cssVersion    = 0;
 
 function getClassObserver() {
   if (!classObserver) {
@@ -8091,18 +8435,18 @@ function dropClassCards() {
   classListEl.innerHTML = '';
 }
 
-// Sample text/tag changed: update cards that already finished loading without reloading them.
+
 function refreshCardSamples() {
   classCardCache.forEach(({ iframe }) => {
-    if (!iframe.dataset.loaded) return;                       // not built yet -> observer will use the new sample
+    if (!iframe.dataset.loaded) return;                      
     if (iframe.classList.contains('is-ready')) {
       try {
         iframe.contentDocument.body.innerHTML = getClassSampleHTML(iframe.dataset.clsName);
         fitPreviewIframe(iframe);
         return;
-      } catch(e) { /* fall through and reload */ }
+      } catch(e) { }
     }
-    iframe.srcdoc = buildClassPreviewDoc(iframe.dataset.clsName); // still loading (or in-place failed): restart it
+    iframe.srcdoc = buildClassPreviewDoc(iframe.dataset.clsName); 
   });
 }
 
@@ -8159,16 +8503,14 @@ function buildClassCard(cls) {
   iframe.dataset.clsName = cls.name;
   iframe.addEventListener('load', () => {
     fitPreviewIframe(iframe);
-    // A fresh iframe fires 'load' for its empty about:blank document first; only the real
-    // preview document (about:srcdoc) may be revealed.
+
     let isPreviewDoc = false;
     try { isPreviewDoc = iframe.contentDocument.URL === 'about:srcdoc'; } catch(e) { isPreviewDoc = !!iframe.dataset.loaded; }
     if (!isPreviewDoc) return;
-    // Wait two frames so the loaded document has been painted before we un-hide it.
+
     requestAnimationFrame(() => requestAnimationFrame(() => iframe.classList.add('is-ready')));
   });
 
-  // The wrapper carries the preview colour, so the card looks right while the iframe is hidden.
   const previewWrap = document.createElement('div');
   previewWrap.className = 'class-preview-wrap';
   previewWrap.style.background = previewBg;
@@ -8190,19 +8532,16 @@ function buildClassCard(cls) {
 }
 
 function renderClassList(classes) {
-  // New stylesheet or preview background -> every cached card is stale, start over.
   const cacheKey = cssVersion + '|' + previewBg;
   if (cacheKey !== cardCacheKey) { dropClassCards(); cardCacheKey = cacheKey; }
-
-  // Sample text / tag changed -> update the cards we are keeping.
   const sampleKey = sampleTagEl.value + '\u0000' + sampleTextEl.value;
   if (sampleKey !== cardSampleKey) { cardSampleKey = sampleKey; refreshCardSamples(); }
 
   if (!classes.length) {
     dropClassCards();
-    const msg = activeTab === 'favorites'
-      ? 'No favorites yet — click the ☆ on a class to save it here.'
-      : 'No classes found.';
+    const msg = activeTab === 'favorites' && !getBaseClasses().length
+       ? 'No favorites yet — click the ☆ on a class to save it here.'
+      : 'No classes match your search and category filter.';
     classListEl.innerHTML = `<div style="padding:14px 6px;font-size:12px;color:#7a7a6a">${msg}</div>`;
     return;
   }
@@ -8210,7 +8549,6 @@ function renderClassList(classes) {
   const observer = getClassObserver();
   const wanted = new Set(classes.map(c => c.name));
 
-  // 1) Remove the empty-state message and any cards that are no longer in the results.
   Array.from(classListEl.children).forEach(el => { if (!el.classList.contains('class-item')) el.remove(); });
   classCardCache.forEach((card, name) => {
     if (wanted.has(name)) return;
@@ -8218,9 +8556,6 @@ function renderClassList(classes) {
     card.item.remove();
     classCardCache.delete(name);
   });
-
-  // 2) Walk the wanted list in order. Cards that are already in the right place are not touched;
-  //    new ones are inserted before the next existing card.
   let ref = classListEl.firstElementChild;
   classes.forEach(cls => {
     let card = classCardCache.get(cls.name);
@@ -8232,7 +8567,7 @@ function renderClassList(classes) {
     } else if (card.item === ref) {
       ref = ref.nextElementSibling;
     } else {
-      classListEl.insertBefore(card.item, ref);   // out of order (rare) - this one will reload
+      classListEl.insertBefore(card.item, ref);   
     }
   });
 }
@@ -8265,8 +8600,6 @@ async function loadCSS() {
     const css = await res.text();
     applyLoadedCSS(css, 'GitHub');
   } catch (e) {
-    // Keep whatever classes were already loaded (bundled or a previous
-    // successful refresh) instead of wiping the panel on failure.
     const count = allClasses.length;
     panelStatus.innerHTML = count
       ? `<span style="color:#f87171">Refresh failed — keeping ${count} previously loaded classes</span>`
